@@ -3,7 +3,6 @@ assets
 client.js
 server.js
 
-
 # Logs
 logs
 *.log
