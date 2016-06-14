@@ -3,10 +3,11 @@ var app = express();
 var http = require('http').Server(app);
 var io = require('socket.io')(http);
 
-module.exports = function() {
-  // do some stuff
+module.exports = (function() {
+  // static from /assets
   app.use(express.static('assets'));
 
+  // set up routes
   app.get('/', function(req, res) {
     res.sendFile(__dirname + '/index.html');
   });
@@ -20,30 +21,25 @@ module.exports = function() {
     res.sendFile(__dirname + '/lib/fabric.js');
   });
 
-  // io.on('connection', function(socket) {
-  //   console.log('a user connected');
-  //   socket.on('disconnect', function(){
-  //     console.log('user disconnected');
-  //   });
-  //   socket.on('chat message', function(msg) {
-  //     console.log('message: ' + msg);
-  //     io.emit('chat message', msg);
-  //   });
-  // });
+  // attach events, this will connect all the custom and internal events to the actual socket.io events
+  var attachEvents = function(socket, events) {
+    Object.keys(events).forEach(function(key, index) {
+      socket.on(key, function(params) {
+        events[key](socket, params);
+      });
+    });
+  };
 
-  // return object
+  // return the monsterr object
   return {
     run: function(port) {
       var that = this;
       io.on('connection', function(socket) {
         console.log('a user connected');
 
-        for (var e in that.events) {
-          socket.on(e, (params) => {
-            socket.reply = socket.emit;
-            that.events[e](socket, params);
-          });
-        }
+        attachEvents(socket, that._events);
+        attachEvents(socket, that.events);
+
         socket.on('disconnect', function(){
           console.log('user disconnected');
         });
@@ -52,6 +48,7 @@ module.exports = function() {
       // default to http
       port = port || 80;
 
+      // start server
       http.listen(port, function() {
         console.log('listening on ' + port);
       });
@@ -62,12 +59,15 @@ module.exports = function() {
       io.emit(topic, message);
     },
 
-    // events
-    // should be added to or overwritten to implement custom behaviour
-    events: {
-      'chat message': function(sender, msg) {
-        io.emit('chat message', msg);
+    // internal events
+    _events: {
+      'message': function(sender, msg) {
+        // relay chat messages to all clients
+        io.emit('message', msg);
       }
-    }
+    },
+    // custom events
+    events: {}
   }
-}
+
+})();

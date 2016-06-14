@@ -1,7 +1,7 @@
 {
   "name": "monsterr",
-  "version": "0.0.2",
-  "description": "Framework for designing experiments",
+  "version": "0.0.3",
+  "description": "Node.js framework for designing socioeconomic experiments.",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
