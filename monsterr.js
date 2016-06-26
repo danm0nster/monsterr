@@ -11,11 +11,15 @@ var monsterr = (function() {
     return false;
   });
 
+  var _state = {
+    groupId: null
+  };
+
   // attach events, this will connect all the custom and internal events to the actual socket.io events
   var _attachEvents = function(socket, events) {
     Object.keys(events).forEach(function(key, index) {
       socket.on(key, function(params) {
-        events[key](socket, params);
+        events[key](params);
       });
     });
   };
@@ -44,18 +48,27 @@ var monsterr = (function() {
     canvasBackgroundColor: '#999'
   };
   var _events = {
-    'message': function(sender, msg) {
+    'message': function(msg) {
       $('#messages').prepend($('<li>').text(msg));
+    },
+    'group_assignment': function(msg) {
+      _state.groupId = msg.groupId;
+      $('#messages').prepend($('<li>').text('You\'ve been assigned group #' + msg.groupId));
     }
   };
 
 
   // return monsterr object
   return {
-    // Options
+    // options
     options: {},
     // custom events
     events: {},
+
+    // wrap socket.io methods
+    send: function(topic, message) {
+      _socket.emit(topic, message);
+    },
 
     run: function() {
       this.options = Object.assign(_options, this.options); // combine user defined options and defaults

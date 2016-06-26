@@ -8,11 +8,12 @@ monsterr.send('myEvent', {myData});
 ![send](/guide/images/send.png?raw=true "send")
 
 ## Server side responding to events
-When receiving an event on the server you sometimes want to send something back. Sometimes only to the client who send the event. Sometimes to everyone. For these purposes each event handler will be passed a `client` object along with the event data.
+When receiving an event on the server you sometimes want to send something back. Sometimes only to the client who send the event. Sometimes to everyone. For these purposes each event handler will be passed a `client` object along with the event data. The client object contains methods for sending events and also the id of the client and the id of the group the client is part of.
 ```js
 monsterr.events = {
   'myEvent': (client, data) => {
-    ...
+    client.id; // the clients own id
+    client.groupId; // the id of the group the client is part of
   }
 }
 
@@ -25,7 +26,7 @@ Send event to the client who send the current event.
 ```js
 ...
 client.send('otherEvent', {otherData}).to.client();
-monsterr.send('otherEvent', {otherData}).to.client(/* client id */); // general
+monsterr.send('otherEvent', {otherData}).to.client(client.id); // general
 ...
 ```
 ![toclient](/guide/images/toclient.png?raw=true "to.client")
@@ -54,7 +55,7 @@ Send event to all clients in the same group as the client who send the current e
 ```js
 ...
 client.send('otherEvent', {otherData}).to.group();
-monsterr.send('otherEvent', {otherData}).to.group(/* group id */); // general
+monsterr.send('otherEvent', {otherData}).to.group(client.groupId); // general
 ...
 ```
 ![togroup](/guide/images/togroup.png?raw=true "to.group")

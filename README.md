@@ -1,14 +1,15 @@
 # monsterr
-Node.js based framework for socioeconomic experiments.
+Description coming.
 
 # Installation
-Install using Node.js:
+Install using `npm`:
 
 ```
 npm install monsterr --save
 ```
 
 # Usage
+
 
 ## Events
 Events are available on the server and on the client. You simply define events as functions that will get called when that event occurs. You can also `emit` events.
@@ -79,4 +80,11 @@ TODO
 TODO
 
 ## Network
-TODO
+On the server side you can access the `network` object with `monsterr.network`. On the client side you have no access to the underlying network. But you can tag messages for general comsumption or on a group basis. See Groups.
+
+Using the `network` object you can do a couple of things.
+Before running the server you can specify a desired group size. monsterr will automatically fill users into separated groups of that size. During execution you can either shuffle the network (which will shuffle the users into new constellations) or you can specify a new group size which will also force a shuffle.
+
+You can check whether or not the network is balanced (each group is full).
+
+You can balance the network. This is essentially equivalent to shuffle, but semantically slightly different.

@@ -4,7 +4,7 @@ var http = require('http').Server(app);
 var io = require('socket.io')(http);
 
 // own modules
-var network = require('./lib/network');
+var _network = require('./imports/network');
 
 module.exports = (function() {
   // static from /assets
@@ -25,10 +25,35 @@ module.exports = (function() {
   });
 
   // attach events, this will connect all the custom and internal events to the actual socket.io events
-  var _attachEvents = function(socket, events) {
+  var _attachEvents = function(monsterr, socket, events) {
+    var client = {
+      id: socket.id,
+      groupId: monsterr.network.isMember(socket.id),
+      send: function(topic, message) {
+        return {
+          to: {
+            client: function() {
+              socket.emit(topic, message);
+            },
+            all: function() {
+              io.emit(topic, message);
+            },
+            allX: function() {
+              socket.broadcast.emit(topic, message);
+            },
+            group: function() {
+              io.to(monsterr.network.isMember(socket.id)).emit(topic, message);
+            },
+            groupX: function() {
+              socket.broadcast.to(monsterr.network.isMember(socket.id)).emit(topic, message);
+            }
+          }
+        }
+      }
+    };
     Object.keys(events).forEach(function(key, index) {
       socket.on(key, function(params) {
-        events[key](socket, params);
+        events[key](client, params, monsterr);
       });
     });
   };
@@ -40,9 +65,12 @@ module.exports = (function() {
   };
   // Events
   var _internalEvents = {
-    'message': function(sender, msg) {
-      // relay chat messages to all clients
-      io.emit('message', msg);
+    'message': function(client, msg, monsterr) {
+      // relay chat messages to group members
+      var gid = monsterr.network.isMember(client.id);
+      if (gid) {
+        io.to(gid).emit('message', msg);
+      }
     }
   };
 
@@ -53,8 +81,6 @@ module.exports = (function() {
     events: {},     // custom events
     options: {},    // custom options
 
-    /* *** Methods *** */
-
     // * run *
     // This starts the framework and should be called AFTER options and events have been defined
     run: function() {
@@ -64,20 +90,28 @@ module.exports = (function() {
       that.options = Object.assign(_defaultOptions, that.options); // combine user defined options and defaults
 
       // START NETWORK
-      that.network = network({
+      that.network = _network({
         groupSize: that.options.groupSize
       });
 
       // SOCKET.IO
       io.on('connection', function(socket) {
-        console.log('user connected');
+        const sid = socket.id;
+        console.log('user ' + sid + ' connected!');
+
+        // Add to network
+        var groupId = that.network.addMember(sid);
+        socket.join(groupId);
+        socket.emit('group_assignment', {groupId});
+
 
         // EVENTS
-        _attachEvents(socket, _internalEvents);
-        _attachEvents(socket, that.events);
+        _attachEvents(that, socket, _internalEvents);
+        _attachEvents(that, socket, that.events);
 
         socket.on('disconnect', function(){
-          console.log('user disconnected');
+          console.log('user ' + sid + ' disconnected!');
+          that.network.removeMember(sid);
         });
       });
 
@@ -88,8 +122,20 @@ module.exports = (function() {
     },
 
     // wrap io's emit function to allow monsterr.emit();
-    emit: function(topic, message) {
-      io.emit(topic, message);
+    send: function(topic, message) {
+      return {
+        to: {
+          all: function() {
+            io.emit(topic, message);
+          },
+          group: function(groupId) {
+            io.to(groupId).emit(topic, message);
+          },
+          client: function(clientId) {
+            io.to(clientId).emit(topic, message);
+          }
+        }
+      }
     }
   }
 

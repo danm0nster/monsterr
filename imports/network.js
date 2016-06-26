@@ -39,22 +39,39 @@ module.exports = (function(options) {
 
     isMember: function(id) {
       return _groups.reduce(function(res, elem) {
-        return (res || elem.isMember(id));
-      }, false);
+        return res || (elem.isMember(id) ? elem.getId() : null);
+      }, null);
     },
     addMember: function(id) {
       if (this.isMember(id)) {
-        return false;
+        return null;
       } else {
         var nfGroup = this.getNonFullGroup();
         nfGroup.addMember(id);
-        return true;
+        return nfGroup.getId();
       }
     },
     removeMember: function(id) {
+      var that = this;
       return _groups.reduce(function(res, elem) {
-        return res || elem.removeMember(id);
+        return res || (elem.removeMember(id) &&
+                       elem.isEmpty() &&
+                       that.removeGroup(elem.getId()));
       }, false);
+    },
+
+    hasGroup: function(id) {
+      return _groups.reduce(function(res, group) {
+        return res || group.getId() === id;
+      }, false);
+    },
+    removeGroup: function(id) {
+      if (this.hasGroup(id)) {
+        _groups.splice(_groups.indexOf(id), 1);
+        return true;
+      } else {
+        return false;
+      }
     },
 
     getNonFullGroup() {
