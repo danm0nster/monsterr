@@ -5,6 +5,7 @@ var io = require('socket.io')(http);
 
 // own modules
 var _network = require('./imports/network');
+var _logger = require('./imports/logger');
 
 module.exports = (function() {
   // static from /assets
@@ -25,10 +26,12 @@ module.exports = (function() {
   });
 
   // attach events, this will connect all the custom and internal events to the actual socket.io events
-  var _attachEvents = function(monsterr, socket, events) {
+  var _attachEvents = function(socket, events) {
     var client = {
       id: socket.id,
-      groupId: monsterr.network.isMember(socket.id),
+      groupId: _monsterr.network.isMember(socket.id),
+
+      /* Client specific messaging */
       send: function(topic, message) {
         return {
           to: {
@@ -42,10 +45,10 @@ module.exports = (function() {
               socket.broadcast.emit(topic, message);
             },
             group: function() {
-              io.to(monsterr.network.isMember(socket.id)).emit(topic, message);
+              io.to(_monsterr.network.isMember(socket.id)).emit(topic, message);
             },
             groupX: function() {
-              socket.broadcast.to(monsterr.network.isMember(socket.id)).emit(topic, message);
+              socket.broadcast.to(_monsterr.network.isMember(socket.id)).emit(topic, message);
             }
           }
         }
@@ -53,7 +56,7 @@ module.exports = (function() {
     };
     Object.keys(events).forEach(function(key, index) {
       socket.on(key, function(params) {
-        events[key](client, params, monsterr);
+        events[key](client, params);
       });
     });
   };
@@ -65,21 +68,34 @@ module.exports = (function() {
   };
   // Events
   var _internalEvents = {
-    'message': function(client, msg, monsterr) {
+    '_msg': function(client, msg) {
       // relay chat messages to group members
-      var gid = monsterr.network.isMember(client.id);
+      var gid = _monsterr.network.isMember(client.id);
       if (gid) {
-        io.to(gid).emit('message', msg);
+        io.to(gid).emit('_msg', client.id.substring(2,7) + ': ' + msg);
       }
+    },
+    '_log': function(client, json) {
+      _monsterr.log(json.msg, json.fileOrExtra, json.extra);
+    },
+    '_cmd': function(client, json) {
+      Object.keys(_monsterr.commands).forEach(function(key, index) {
+        if (key === json.cmd) {
+          // simply run it
+          _monsterr.commands[json.cmd](client, json.args);
+        };
+      });
     }
   };
 
   // return the monsterr object
-  return {
+  var _monsterr = {
     /* *** Objects *** */
     network: null,  // initialized in run
     events: {},     // custom events
     options: {},    // custom options
+    commands: {},   // custom commands
+    logger: _logger({}),
 
     // * run *
     // This starts the framework and should be called AFTER options and events have been defined
@@ -102,12 +118,12 @@ module.exports = (function() {
         // Add to network
         var groupId = that.network.addMember(sid);
         socket.join(groupId);
-        socket.emit('group_assignment', {groupId});
+        socket.emit('_group_assignment', {groupId});
 
 
-        // EVENTS
-        _attachEvents(that, socket, _internalEvents);
-        _attachEvents(that, socket, that.events);
+        // EVENTS & MESSAGING
+        _attachEvents(socket, _internalEvents);
+        _attachEvents(socket, that.events);
 
         socket.on('disconnect', function(){
           console.log('user ' + sid + ' disconnected!');
@@ -121,7 +137,7 @@ module.exports = (function() {
       });
     },
 
-    // wrap io's emit function to allow monsterr.emit();
+    // General messaging
     send: function(topic, message) {
       return {
         to: {
@@ -136,7 +152,20 @@ module.exports = (function() {
           }
         }
       }
+    },
+
+    // Log stuff
+    log: function(msg, fileOrExtra, extra) {
+      if (msg && fileOrExtra && extra) {
+        this.logger.log(msg, fileOrExtra, extra);
+      } else if (msg && fileOrExtra) {
+        this.logger.log(msg, fileOrExtra);
+      } else {
+        this.logger.log(msg);
+      }
     }
-  }
+  };
+
+  return _monsterr;
 
 })();
