@@ -1,6 +1,6 @@
 {
   "name": "monsterr",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "Node.js framework for designing socioeconomic experiments.",
   "main": "index.js",
   "scripts": {
