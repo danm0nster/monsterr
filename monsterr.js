@@ -102,6 +102,7 @@ var monsterr = (function() {
     events: {},
     // commands
     commands: {},
+    canvas: null, // created in run in run
 
     // wrap socket.io methods
     send: function(topic, message) {

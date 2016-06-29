@@ -1,16 +1,26 @@
 // Logger
 var winston = require('winston');
 var path = require('path');
+var fs = require('fs');
 
 module.exports = (function(options) {
   options = options || {};
   var _default = options.default || 'default';
   var _level = options.level || 'info';
+  var _log_path = path.join(process.cwd(), '/logs');
+
+
+  // check that it exists and create it if it don't
+  try {
+    fs.statSync(_log_path);
+  } catch (err) {
+    fs.mkdirSync(_log_path);
+  }
 
   var _defaultLogger = new (winston.Logger)({
     transports: [
       new (winston.transports.File)({
-        filename: path.join(__dirname, '/../logs/', _default + '.log'),
+        filename: path.join(_log_path, _default + '.log'),
         level: _level
       })
     ]
@@ -22,7 +32,7 @@ module.exports = (function(options) {
     var newLogger = new (winston.Logger)({
       transports: [
         new (winston.transports.File)({
-          filename: path.join(__dirname, '/../logs/', logger + '.log'),
+          filename: path.join(_log_path, logger + '.log'),
           level: _level
         })
       ]
