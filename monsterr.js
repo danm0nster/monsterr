@@ -135,6 +135,9 @@ var monsterr = (function() {
     chat: {
       prepend: function(msg) {
         $('#messages').prepend($('<li>').text(msg));
+      },
+      clear: function() {
+        $('#messages').html('');
       }
     }
   };
