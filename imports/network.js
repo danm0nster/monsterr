@@ -1,122 +1,144 @@
-// Network
+/**
+ * @typedef {number[][]} adjList
+ */
 
-var group = require('./group');
+/**
+ * Returns the first empty (undefined) index in an array or -1 if no empty indexes exist.
+ * @param {*[]} array the array to check
+ * @returns {number}
+ */
+function firstEmptyIndex (array) {
+  return array.reduce((prev, elem, index) => {
+    if (prev !== -1) {
+      return prev
+    }
 
-module.exports = (function(options) {
-  options = options || {};
-  var _groups = [];
-  var _groupSize = options.groupSize || 2;
+    return elem === undefined ? index : -1
+  }, -1)
+}
 
+/**
+ * Returns an adjecency list representing the same network layout as the matrix.
+ * @param {adjList} matrix The matrix to convert.
+ * @returns {adjList}
+ */
+function matrixToList (matrix) {
+  return matrix.map((row, rowIndex) =>
+    row
+      .map((e, i) => e !== 0 ? i : -1)
+      .filter((elem, colIndex) =>
+        elem !== -1 && colIndex !== rowIndex
+      )
+  )
+}
 
-  /**
-  * Shuffles array in place.
-  * @param {Array} a items The array containing the items.
-  */
-  var _shuffle = function(a) {
-    var j, x, i;
-    for (i = a.length; i; i -= 1) {
-        j = Math.floor(Math.random() * i);
-        x = a[i - 1];
-        a[i - 1] = a[j];
-        a[j] = x;
-    };
-    return a;
-  };
+/**
+ * Returns a network.
+ * @param {adjList} adjList an adjecency list defining a network layout
+ */
+function network (adjList) {
+  let players = []
+  let playerToIndex = {}
 
   return {
-    getSize: function() {
-      return _groups.reduce(function(sum, elem) {
-        return sum + elem.getSize();
-      }, 0);
-    },
-    getGroupSize: function() {
-      return _groupSize;
-    },
-
-    isEmpty: function() {
-      return (this.getSize() <= 0);
-    },
-
-    isMember: function(id) {
-      return _groups.reduce(function(res, elem) {
-        return res || (elem.isMember(id) ? elem.getId() : null);
-      }, null);
-    },
-    addMember: function(id) {
-      if (this.isMember(id)) {
-        return null;
+    addPlayer (player) {
+      let nextIndex = firstEmptyIndex(players)
+      if (nextIndex !== -1) {
+        playerToIndex[player] = nextIndex
+        players[nextIndex] = player
       } else {
-        var nfGroup = this.getNonFullGroup();
-        nfGroup.addMember(id);
-        return nfGroup.getId();
-      }
-    },
-    removeMember: function(id) {
-      var that = this;
-      return _groups.reduce(function(res, elem) {
-        return res || (elem.removeMember(id) &&
-                       elem.isEmpty() &&
-                       that.removeGroup(elem.getId()));
-      }, false);
-    },
-
-    hasGroup: function(id) {
-      return _groups.reduce(function(res, group) {
-        return res || group.getId() === id;
-      }, false);
-    },
-    removeGroup: function(id) {
-      if (this.hasGroup(id)) {
-        _groups.splice(_groups.indexOf(id), 1);
-        return true;
-      } else {
-        return false;
+        playerToIndex[player] = players.length
+        players.push(player)
       }
     },
 
-    getNonFullGroup() {
-      var nfGroup = _groups.reduce(function(res, elem) {
-        return res || (elem.isFull() ? null : elem);
-      }, null);
-      return nfGroup || this.newGroup();
+    removePlayer (player) {
+      let index = playerToIndex[player]
+      playerToIndex[player] = undefined
+      players[index] = undefined
     },
 
-    newGroup: function() {
-      var newGroup = group({size: _groupSize});
-      _groups.push(newGroup);
-      return newGroup;
-    },
-    getGroups: function() {
-      return _groups;
+    getPlayerIndex (player) {
+      let index = playerToIndex[player]
+      return index === undefined ? -1 : index
     },
 
-    isBalanced: function() {
-      return _groups.reduce(function(res, elem) {
-        return (res && elem.isFull());
-      }, true);
+    getPlayers () {
+      return players
     },
 
-    setGroupSize: function(groupSize) {
-      _groupSize = groupSize; // set new size and shuffle
-      this.shuffle();
-    },
+    getNeighbours (player) {
+      let index = playerToIndex[player]
+      if (index === undefined) {
+        return [] // player not in network
+      }
 
-    shuffle: function() {
-      var that = this;
-
-      // Get all members
-      var _members = _groups.reduce(function(sum, elem) {
-        return sum.concat(elem.getMembers());
-      }, []);
-
-      _groups = []; // Remove all existing groups
-
-      _members = _shuffle(_members); // Shuffle the members
-
-      // add them anew
-      _members.forEach(function(member, index) {
-        that.addMember(member);
-      });
+      return adjList[index].map(i => players[i]).filter(e => e !== undefined)
     }
   }
-});
+}
+
+module.exports = {
+  matrixToList,
+
+  /**
+   * @param {adjList} list
+   */
+  fromAdjecencyList (list) {
+    return network(list)
+  },
+
+  /**
+   * @param {adjList} matrix
+   */
+  fromAdjecencyMatrix (matrix) {
+    let adjList = matrixToList(matrix)
+    return this.fromAdjecencyList(adjList)
+  },
+
+  /* standard networks */
+  /**
+   * @param {number} playerCount
+   */
+  solo (playerCount) {
+    return this.groups(playerCount, 1)
+  },
+
+  /**
+   * @param {number} playerCount
+   */
+  pairs (playerCount) {
+    return this.groups(playerCount, 2)
+  },
+
+  /**
+   * @param {number} playerCount
+   */
+  clique (playerCount) {
+    return this.groups(playerCount, playerCount)
+  },
+
+  /**
+   * @param {number} playerCount
+   * @param {number} groupSize
+   */
+  groups (playerCount, groupSize) {
+    let adjList = []
+    for (let i = 0; i < playerCount; i) {
+      // create the group
+      let group = []
+      for (let j = i; j < i + groupSize; j++) {
+        group.push(j)
+      }
+
+      // and filter out players themselves
+      for (let k = i; k < i + groupSize; k++) {
+        adjList.push(group.filter(n => n !== k))
+      }
+
+      // go to next group
+      i += groupSize
+    }
+    return network(adjList)
+  }
+}

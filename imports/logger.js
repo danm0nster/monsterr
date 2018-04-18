@@ -1,101 +1,78 @@
 // Logger
-var winston = require('winston');
-var path = require('path');
-var fs = require('fs');
+const winston = require('winston')
+const path = require('path')
+const fs = require('fs')
 
-module.exports = (function(options) {
-  options = options || {};
-  var _default = options.default || 'default';
-  var _level = options.level || 'info';
-  var _log_path = path.join(process.cwd(), '/logs');
-
+module.exports = function ({
+  defaultLogfile = 'default',
+  level = 'info'
+} = {}) {
+  const logPath = path.join(process.cwd(), '/logs')
 
   // check that it exists and create it if it don't
   try {
-    fs.statSync(_log_path);
+    fs.statSync(logPath)
   } catch (err) {
-    fs.mkdirSync(_log_path);
+    fs.mkdirSync(logPath)
   }
 
-  var _defaultLogger = new (winston.Logger)({
+  const defaultLogger = new (winston.Logger)({
     transports: [
       new (winston.transports.File)({
-        filename: path.join(_log_path, _default + '.log'),
-        level: _level
+        filename: path.join(logPath, defaultLogfile + '.log'),
+        level: level
       })
     ]
-  });
+  })
 
-  var _loggers = { _default: _defaultLogger };
+  const loggers = { default: defaultLogger }
 
-  var _addLogger = function(logger) {
-    var newLogger = new (winston.Logger)({
+  const addLogger = function (logFile) {
+    const newLogger = new (winston.Logger)({
       transports: [
         new (winston.transports.File)({
-          filename: path.join(_log_path, logger + '.log'),
-          level: _level
+          filename: path.join(logPath, logFile + '.log'),
+          level: level
         })
       ]
-    });
-    _loggers[logger] = newLogger;
-  };
+    })
+    loggers[logFile] = newLogger
+  }
 
-  var _logToOther = function(logger, msg, extra) {
-    if (Object.keys(_loggers).indexOf(logger) !== -1) {
-      // it exists
-      if (extra) {
-        _loggers[logger].log(_level, msg, extra);
-      } else {
-        _loggers[logger].log(_level, msg);
-      }
+  const logToOther = function (logFile, msg, extra) {
+    if (loggers[logFile]) {
+      loggers[logFile].log(level, msg, extra)
     } else {
-      // otherwise add it
-      _addLogger(logger);
-      // and try again
-      _logToOther(logger, msg, extra);
+      // add logger and retry
+      addLogger(logFile)
+      logToOther(logFile, msg, extra)
     }
-  };
+  }
 
   return {
-    log: function(msg, logfileOrExtra, extra) {
-      switch (arguments.length) {
-        case 1:
-          _defaultLogger.log(_level, msg);
-          break;
-        case 2:
-          if (typeof logfileOrExtra === 'string') {
-            // log to different file
-            _logToOther(logfileOrExtra, msg);
-          } else {
-            // extra
-            _defaultLogger.log(_level, msg, logfileOrExtra);
-          }
-          break;
-        case 3:
-          // log to different file
-          _logToOther(logfileOrExtra, msg, extra);
-          break;
-        default:
-
-      }
-
-    },
-    getLog: function(logOrCb, cb) {
-      if (arguments.length === 1) {
-
-        _defaultLogger.query({
-          fields: ['message', 'extra']
-        }, function(err, res) {
-          logOrCb(res);
-        });
+    log: function (msg, logfileOrExtra, extra) {
+      if (typeof logfileOrExtra === 'string') { // we want to log to different logFile
+        logToOther(logfileOrExtra, msg, extra)
       } else {
-        _loggers[logOrCb].query({
-          fields: ['message', 'extra']
-        }, function(err, res) {
-          cb(res);
-        })
+        defaultLogger.log(level, msg, logfileOrExtra)
       }
+    },
+
+    getLog: function (logOrCb, cb) {
+      let logger = (typeof logOrCb === 'function')
+        ? defaultLogger
+        : loggers[logOrCb]
+
+      logger.query({
+        fields: ['message', 'extra']
+      }, function (err, res) {
+        if (err) {
+          console.log(err)
+        }
+
+        cb ? cb(res) : logOrCb(res)
+      })
     }
 
   }
-});
+}

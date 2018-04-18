@@ -1,171 +1,136 @@
-var express = require('express');
-var app = express();
-var http = require('http').Server(app);
-var io = require('socket.io')(http);
+const express = require('express')
+const app = express()
+const http = require('http').Server(app)
+const io = require('socket.io')(http)
+const path = require('path')
 
-// own modules
-var _network = require('./imports/network');
-var _logger = require('./imports/logger');
+const Logger = require('./imports/logger')
+const Network = require('./imports/network')
 
-module.exports = (function() {
-  // static from /assets
-  app.use(express.static('assets'));
+// We serve static from /client. This allows games to easily include static assets by putting them in the /client directory.
+app.use(express.static('client'))
 
-  // set up routes
-  app.get('/', function(req, res) {
-    res.sendFile(__dirname + '/index.html');
-  });
-  app.get('/client', function(req, res) {
-    res.sendFile('client.js', {root: '.'});
-  });
-  app.get('/monsterr', function(req, res) {
-    res.sendFile(__dirname + '/monsterr.js');
-  });
-  app.get('/fabric', function(req, res) {
-    res.sendFile(__dirname + '/imports/fabric.js');
-  });
+/* Routes */
+app.get('/', function (req, res) {
+  res.sendFile(path.join(__dirname, 'index.html'))
+})
+app.get('/fabric', function (req, res) {
+  res.sendFile(path.join(__dirname, 'imports', 'fabric-2.2.3.js'))
+})
+app.get('/monsterr', function (req, res) {
+  res.sendFile(path.join(__dirname, '/monsterr.js'))
+})
 
-  // attach events, this will connect all the custom and internal events to the actual socket.io events
-  var _attachEvents = function(socket, events) {
-    var client = {
-      id: socket.id,
-      groupId: _monsterr.network.isMember(socket.id),
+/**
+ * Attaches events to a socket. Also makes sure to provide event handlers
+ * with a nifty client object allowing for easy communication with the
+ * originating client (and it's neighbours)
+ * @param {*} socket
+ * @param {{}} events
+ */
+function attachEvents (socket, events) {
+  const client = {
+    id: socket.id,
 
-      /* Client specific messaging */
-      send: function(topic, message) {
-        return {
-          to: {
-            client: function() {
-              socket.emit(topic, message);
-            },
-            all: function() {
-              io.emit(topic, message);
-            },
-            allX: function() {
-              socket.broadcast.emit(topic, message);
-            },
-            group: function() {
-              io.to(_monsterr.network.isMember(socket.id)).emit(topic, message);
-            },
-            groupX: function() {
-              socket.broadcast.to(_monsterr.network.isMember(socket.id)).emit(topic, message);
-            }
+    send: (topic, message) => ({
+      to: {
+        client: () => socket.emit(topic, message),
+        allExceptClient: () => socket.broadcast.emit(topic, message),
+        neighbours () {
+          this.neighboursExceptClient() // send to all others
+          io.to(socket.id).emit(topic, message) // and self
+        },
+        neighboursExceptClient: () => {
+          let neighbours = monsterr.network.getNeighbours(socket.id)
+          if (neighbours.length) {
+            neighbours.reduce((chain, neighbour) => {
+              return chain.to(neighbour)
+            }, io).emit(topic, message)
           }
         }
       }
-    };
-    Object.keys(events).forEach(function(key, index) {
-      socket.on(key, function(params) {
-        events[key](client, params);
-      });
-    });
-  };
+    })
+  }
 
-  // Options
-  var _defaultOptions = {
-    port: 3000,
-    groupSize: 2
-  };
-  // Events
-  var _internalEvents = {
-    '_msg': function(client, msg) {
-      // relay chat messages to group members
-      var gid = _monsterr.network.isMember(client.id);
-      if (gid) {
-        io.to(gid).emit('_msg', client.id.substring(2,7) + ': ' + msg);
-      }
-    },
-    '_log': function(client, json) {
-      _monsterr.log(json.msg, json.fileOrExtra, json.extra);
-    },
-    '_cmd': function(client, json) {
-      Object.keys(_monsterr.commands).forEach(function(key, index) {
-        if (key === json.cmd) {
-          // simply run it
-          _monsterr.commands[json.cmd](client, json.args);
-        };
-      });
+  Object.keys(events).forEach(function (key, index) {
+    socket.on(key, (...args) => {
+      events[key](client, ...args)
+    })
+  })
+}
+
+/* Options */
+const defaultOptions = {
+  port: 3000
+}
+
+/* Events */
+const internalEvents = {
+  '_msg': function (client, msg) {
+    // relay chat messages to group members
+    client.send('_msg', msg).to.neighbours() // this includes self
+  },
+  '_log': function (client, json) {
+    monsterr.log(json.msg, json.fileOrExtra, json.extra)
+  },
+  '_cmd': function (client, json) {
+    Object.keys(monsterr.commands).forEach(function (key, index) {
+      if (key === json.cmd) {
+        // simply run it
+        monsterr.commands[json.cmd](client, json.args)
+      };
+    })
+  }
+}
+
+/**
+ * The monsterr object.
+ * This object is exposed to the game and in turn exposes required functionality to the game. It is intended as a single touchpoint for games and the framework.
+ */
+const monsterr = {
+  network: null, // initialized in run
+  logger: Logger({}),
+
+  events: {}, // custom events (to be filled by game)
+  options: {}, // custom options (to be filled by game)
+  commands: {}, // custom commands (to be filled by game)
+
+  // should be called by the game when ready
+  run () {
+    // setup
+    this.options = Object.assign(defaultOptions, this.options)
+    this.network = Network.pairs(4)
+
+    // wire sockets
+    io.on('connection', (socket) => {
+      console.log('user ' + socket.id + ' connected!')
+      this.network.addPlayer(socket.id)
+      attachEvents(socket, internalEvents)
+      attachEvents(socket, this.events)
+
+      socket.on('disconnect', () => {
+        console.log('user ' + socket.id + ' disconnected!')
+        this.network.removePlayer(socket.id)
+        socket.removeAllListeners()
+      })
+    })
+
+    // start server
+    http.listen(this.options.port, () => {
+      console.log('listening on ' + this.options.port)
+    })
+  },
+
+  /* general messaging */
+  send: (topic, message) => ({
+    to: {
+      all: () => io.emit(topic, message),
+      client: (socketId) => io.to(socketId).emit(topic, message)
     }
-  };
+  }),
 
-  // return the monsterr object
-  var _monsterr = {
-    /* *** Objects *** */
-    network: null,  // initialized in run
-    events: {},     // custom events
-    options: {},    // custom options
-    commands: {},   // custom commands
-    logger: _logger({}),
+  /* logging */
+  log: (msg, fileOrExtra, extra) => this.logger.log(msg, fileOrExtra, extra)
+}
 
-    // * run *
-    // This starts the framework and should be called AFTER options and events have been defined
-    run: function() {
-      var that = this;
-
-      // LOAD OPTIONS
-      that.options = Object.assign(_defaultOptions, that.options); // combine user defined options and defaults
-
-      // START NETWORK
-      that.network = _network({
-        groupSize: that.options.groupSize
-      });
-
-      // SOCKET.IO
-      io.on('connection', function(socket) {
-        const sid = socket.id;
-        console.log('user ' + sid + ' connected!');
-
-        // Add to network
-        var groupId = that.network.addMember(sid);
-        socket.join(groupId);
-        socket.emit('_group_assignment', {groupId});
-
-
-        // EVENTS & MESSAGING
-        _attachEvents(socket, _internalEvents);
-        _attachEvents(socket, that.events);
-
-        socket.on('disconnect', function(){
-          console.log('user ' + sid + ' disconnected!');
-          that.network.removeMember(sid);
-        });
-      });
-
-      // START SERVER
-      http.listen(that.options.port, function() {
-        console.log('listening on ' + that.options.port);
-      });
-    },
-
-    // General messaging
-    send: function(topic, message) {
-      return {
-        to: {
-          all: function() {
-            io.emit(topic, message);
-          },
-          group: function(groupId) {
-            io.to(groupId).emit(topic, message);
-          },
-          client: function(clientId) {
-            io.to(clientId).emit(topic, message);
-          }
-        }
-      }
-    },
-
-    // Log stuff
-    log: function(msg, fileOrExtra, extra) {
-      if (msg && fileOrExtra && extra) {
-        this.logger.log(msg, fileOrExtra, extra);
-      } else if (msg && fileOrExtra) {
-        this.logger.log(msg, fileOrExtra);
-      } else {
-        this.logger.log(msg);
-      }
-    }
-  };
-
-  return _monsterr;
-
-})();
+module.exports = monsterr
