@@ -1,3 +1,5 @@
+const uniq = require('lodash/uniq')
+
 /**
  * @typedef {number[][]} adjList
  */
@@ -37,6 +39,9 @@ function matrixToList (matrix) {
  * @param {adjList} adjList an adjecency list defining a network layout
  */
 function network (adjList) {
+  // remove dupes
+  adjList = adjList.map(uniq)
+
   let players = []
   let playerToIndex = {}
 
@@ -139,6 +144,31 @@ module.exports = {
       // go to next group
       i += groupSize
     }
+    return network(adjList)
+  },
+
+  /**
+   * @param {number} playerCount
+   * @param {number} noOfNeighbours
+   */
+  circular (playerCount, noOfNeighbours) {
+    let adjList = []
+    for (let i = 0; i < playerCount; i++) {
+      let neighbours = []
+      for (let j = i - noOfNeighbours; j <= i + noOfNeighbours; j++) {
+        if (j === i) { continue }
+
+        if (j < 0) {
+          neighbours.push(playerCount + j)
+        } else if (j >= playerCount) {
+          neighbours.push(j - playerCount)
+        } else {
+          neighbours.push(j)
+        }
+      }
+      adjList.push(neighbours)
+    }
+
     return network(adjList)
   }
 }

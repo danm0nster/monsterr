@@ -183,4 +183,41 @@ describe('network', () => {
       expect(network.getNeighbours('Mike')).toEqual(['John', 'Jane', 'Will'])
     })
   })
+
+  describe('circular', () => {
+    it('one neighbour each', () => {
+      let network = Network.circular(4, 1)
+      network.addPlayer('John')
+      network.addPlayer('Jane')
+      network.addPlayer('Will')
+      network.addPlayer('Mike')
+      expect(network.getNeighbours('John')).toEqual(['Mike', 'Jane'])
+      expect(network.getNeighbours('Jane')).toEqual(['John', 'Will'])
+      expect(network.getNeighbours('Will')).toEqual(['Jane', 'Mike'])
+      expect(network.getNeighbours('Mike')).toEqual(['Will', 'John'])
+    })
+
+    it('even number of players', () => {
+      let network = Network.circular(4, 2)
+      network.addPlayer('John')
+      network.addPlayer('Jane')
+      network.addPlayer('Will')
+      network.addPlayer('Mike')
+      expect(network.getNeighbours('John')).toEqual(['Will', 'Mike', 'Jane'])
+      expect(network.getNeighbours('Jane')).toEqual(['Mike', 'John', 'Will'])
+      expect(network.getNeighbours('Will')).toEqual(['John', 'Jane', 'Mike'])
+      expect(network.getNeighbours('Mike')).toEqual(['Jane', 'Will', 'John'])
+    })
+
+    it('even number of players', () => {
+      let network = Network.circular(6, 2)
+      network.addPlayer('John')
+      network.addPlayer('Jane')
+      network.addPlayer('Will')
+      network.addPlayer('Mike')
+      network.addPlayer('Susan')
+      network.addPlayer('Joanne')
+      expect(network.getNeighbours('Susan')).toEqual(['Will', 'Mike', 'Joanne', 'John'])
+    })
+  })
 })
