@@ -1,53 +1,43 @@
 /* globals io $ fabric */
 
-// defined monsterr as an immediatly invoked function returning the monsterr object, so as to make it available for client.js
+/* Intentional global. Maybe one day we can get rid of it. */
 var monsterr = (function () { // eslint-disable-line no-unused-vars
   // setup socket
-  var _socket = io()
+  const socket = io()
 
   // setup chat
   $('form').submit(function (event) {
     event.preventDefault()
 
     // parse whatever input the user submitted
-    _parseInput($('#m').val())
-
+    parseInput($('#m').val())
     $('#m').val('')
+
     return false
   })
 
-  var _parseInput = function (string) {
+  function parseInput (string) {
     if (string.substring(0, 1) === '/') {
       // treat as command
-      var args = string.substring(1).split(' ')
-      var cmd = args[0]
+      const args = string.substring(1).split(' ')
+      const cmd = args[0]
       // send to server
-      _handleCommand(cmd, args.splice(1))
+      handleCommand(cmd, args.splice(1))
     } else {
       // treat as chat message
-      _socket.emit('_msg', string)
+      socket.emit('_msg', string)
     }
   }
 
-  var _handleCommand = function (cmd, args) {
-    var sendToServer = true
-    Object.keys(_monsterr.commands).forEach(function (key, index) {
-      if (key === cmd) {
-        // if the command doesn't return false
-        if (_monsterr.commands[cmd](args) === false) {
-          // don't send it to server
-          sendToServer = false
-        };
-      };
-    })
-    // should we sent it?
-    if (sendToServer) {
-      _socket.emit('_cmd', {cmd, args})
+  const handleCommand = function (cmd, args) {
+    let fn = monsterr.commands[cmd]
+    if (fn && fn(args)) {
+      socket.emit('_cmd', { cmd, args })
     }
   }
 
   // attach events, this will connect all the custom and internal events to the actual socket.io events
-  var _attachEvents = function (socket, events) {
+  const attachEvents = function (socket, events) {
     Object.keys(events).forEach(function (key, index) {
       socket.on(key, function (params) {
         events[key](params)
@@ -56,9 +46,9 @@ var monsterr = (function () { // eslint-disable-line no-unused-vars
   }
 
   // setup canvas helper
-  var _setupCanvas = function (that) {
+  const setupCanvas = function (that) {
     // get canvas
-    var canvas = that.canvas
+    const canvas = that.canvas
     // apply background-color
     canvas.setBackgroundColor(that.options.canvasBackgroundColor)
 
@@ -73,43 +63,40 @@ var monsterr = (function () { // eslint-disable-line no-unused-vars
     resizeCanvas()
   }
 
-  var _options = {
+  const defaultOptions = {
     staticCanvas: false,
     chatHeight: 200,
     canvasBackgroundColor: '#999'
   }
-  var _events = {
-    '_msg': function (msg) {
+  const events = {
+    '_msg' (msg) {
       $('#messages').prepend($('<li>').text(msg))
     },
-    '_group_assignment': function (msg) {
+    '_group_assignment' (msg) {
       $('#messages').prepend($('<li>').text('You\'ve been assigned group #' + msg.groupId))
     }
   }
-  var _commands = {
-    'clear': function (args) {
+  const commands = {
+    'clear' (args) {
       $('#messages').html('')
       return false // don't send this
     }
   }
 
-  var _monsterr = {
-    // options
+  const monsterr = {
     options: {},
-    // custom events
     events: {},
-    // commands
     commands: {},
-    canvas: null, // created in run in run
+    canvas: null,
 
     // wrap socket.io methods
-    send: function (topic, message) {
-      _socket.emit(topic, message)
+    send (topic, message) {
+      socket.emit(topic, message)
     },
 
-    run: function () {
-      this.options = Object.assign(_options, this.options) // combine user defined options and defaults
-      this.commands = Object.assign(_commands, this.commands)
+    run () {
+      this.options = Object.assign(defaultOptions, this.options)
+      this.commands = Object.assign(commands, this.commands)
 
       // initiate canvas
       if (this.options.staticCanvas) {
@@ -117,28 +104,28 @@ var monsterr = (function () { // eslint-disable-line no-unused-vars
       } else {
         this.canvas = new fabric.Canvas('canvas')
       }
-      _setupCanvas(this)
+      setupCanvas(this)
 
       // attach the events
-      _attachEvents(_socket, _events) // internal
-      _attachEvents(_socket, this.events) // & custom
+      attachEvents(socket, events) // internal
+      attachEvents(socket, this.events) // & custom
     },
 
-    log: function (msg, fileOrExtra, extra) {
+    log (msg, fileOrExtra, extra) {
       this.send('_log', {
         msg, fileOrExtra, extra
       })
     },
 
     chat: {
-      prepend: function (msg) {
+      prepend (msg) {
         $('#messages').prepend($('<li>').text(msg))
       },
-      clear: function () {
+      clear () {
         $('#messages').html('')
       }
     }
   }
 
-  return _monsterr
+  return monsterr
 })()
