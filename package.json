@@ -4,19 +4,30 @@
   "description": "Node.js framework for designing socioeconomic experiments.",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "install": "node init.js"
+    "test": "jest",
+    "prepare": "require-self"
   },
   "author": "skbogner",
   "license": "ISC",
   "dependencies": {
+    "canvas": "^1.6.10",
     "express": "^4.13.4",
+    "jsdom": "^11.8.0",
     "shortid": "^2.2.6",
     "socket.io": "^1.4.6",
-    "winston": "^2.2.0"
+    "winston": "^2.2.0",
+    "xmldom": "^0.1.27"
   },
   "devDependencies": {
+    "jest": "^22.4.3",
     "chai": "^3.5.0",
+    "eslint": "^4.19.1",
+    "eslint-config-standard": "^11.0.0",
+    "eslint-plugin-import": "^2.11.0",
+    "eslint-plugin-node": "^6.0.1",
+    "eslint-plugin-promise": "^3.7.0",
+    "eslint-plugin-standard": "^3.0.1",
+    "require-self": "^0.2.1",
     "rimraf": "^2.5.2"
   }
 }
