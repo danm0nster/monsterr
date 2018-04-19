@@ -88,7 +88,6 @@ function monsterrServer (app) {
 
     // should be called by the game when ready
     run () {
-      // setup
       this.options = Object.assign(defaultOptions, this.options)
       if (!this.network) { // hasn't been initialized
         this.network = Network.pairs(4)

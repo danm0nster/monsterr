@@ -2,6 +2,8 @@
 assets
 client.js
 server.js
+.cache/
+dist/
 
 # Logs
 logs
