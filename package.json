@@ -4,15 +4,7 @@
   "description": "Node.js framework for designing socioeconomic experiments.",
   "main": "index.js",
   "scripts": {
-    "test": "jest",
-    "prepare": "require-self",
-    "build-client": "yarn prepare & parcel build client.js",
-    "build-server": "yarn prepare & parcel build server.js --target node",
-    "build": "yarn build-client & yarn build-server",
-    "watch-client": "parcel watch client.js --log-level 1",
-    "watch-server": "parcel watch server.js --target node --log-level 1",
-    "dev": "parallelshell \"yarn watch-client\" \"yarn watch-server\" \"nodemon dist/server.js --watch dist/server.js\"",
-    "start": "yarn build && node dist/server.js"
+    "test": "jest"
   },
   "author": "skbogner",
   "license": "ISC",
@@ -26,16 +18,12 @@
     "xmldom": "^0.1.27"
   },
   "devDependencies": {
-    "chai": "^3.5.0",
     "eslint": "^4.19.1",
     "eslint-config-standard": "^11.0.0",
     "eslint-plugin-import": "^2.11.0",
     "eslint-plugin-node": "^6.0.1",
     "eslint-plugin-promise": "^3.7.0",
     "eslint-plugin-standard": "^3.0.1",
-    "jest": "^22.4.3",
-    "parallelshell": "^3.0.2",
-    "require-self": "^0.2.1",
-    "rimraf": "^2.5.2"
+    "jest": "^22.4.3"
   }
 }

@@ -1,9 +1,5 @@
 ## Sample stuff
-assets
-client.js
-server.js
-.cache/
-dist/
+NOTES.md
 
 # Logs
 logs
