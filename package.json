@@ -1,6 +1,6 @@
 {
   "name": "monsterr",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Node.js framework for designing socioeconomic experiments.",
   "main": "index.js",
   "scripts": {
@@ -9,13 +9,9 @@
   "author": "skbogner",
   "license": "ISC",
   "dependencies": {
-    "canvas": "^1.6.10",
-    "express": "^4.13.4",
-    "jsdom": "^11.8.0",
-    "shortid": "^2.2.6",
-    "socket.io": "^1.4.6",
-    "winston": "^2.2.0",
-    "xmldom": "^0.1.27"
+    "express": "^4.16.3",
+    "socket.io": "^2.1.0",
+    "winston": "^2.4.1"
   },
   "devDependencies": {
     "eslint": "^4.19.1",
