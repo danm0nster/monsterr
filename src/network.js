@@ -52,15 +52,20 @@ function network (adjList) {
         playerToIndex[player] = nextIndex
         players[nextIndex] = player
       } else {
+        if (players.length === adjList.length) { return false }
         playerToIndex[player] = players.length
         players.push(player)
       }
+      return true
     },
 
     removePlayer (player) {
       let index = playerToIndex[player]
+      if (index === undefined) { return false }
+
       playerToIndex[player] = undefined
       players[index] = undefined
+      return true
     },
 
     getPlayerIndex (player) {
