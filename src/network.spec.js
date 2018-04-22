@@ -35,6 +35,7 @@ describe('network', () => {
     expect(network.getPlayerIndex('Will')).toEqual(-1)
   })
 
+  // TODO
   it('removing a member should leave a spot in player list', () => {
     let network = Network.fromAdjecencyList(threeNodeGraph)
     network.addPlayer('John')
@@ -44,6 +45,7 @@ describe('network', () => {
     expect(network.getPlayers()).toEqual(['John', undefined, 'Will'])
   })
 
+  // TODO
   it('new members should fill empty spot first', () => {
     let network = Network.fromAdjecencyList(threeNodeGraph)
     network.addPlayer('John')
@@ -89,6 +91,16 @@ describe('network', () => {
 
     it('should convert simple matrix', () => {
       expect(Network.matrixToList(threeNodeGraphAsMatrix)).toEqual(threeNodeGraph)
+    })
+  })
+
+  describe('listToMatrix', () => {
+    it('should convert empty list', () => {
+      expect(Network.listToMatrix([])).toEqual([])
+    })
+
+    it('should convert simple matrix', () => {
+      expect(Network.listToMatrix(threeNodeGraph)).toEqual(threeNodeGraphAsMatrix)
     })
   })
 

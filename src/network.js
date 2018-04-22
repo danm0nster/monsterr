@@ -35,10 +35,29 @@ function matrixToList (matrix) {
 }
 
 /**
+ * Returns an adjecency matrix representing the same network layout as the list.
+ * @param {adjList} list The list to convert.
+ * @returns {adjList}
+ */
+function listToMatrix (list) {
+  return list.map((row, rowIndex) => {
+    let newRow = []
+    for (let colIndex = 0; colIndex < list.length; colIndex++) {
+      if (colIndex === rowIndex || row.includes(colIndex)) {
+        newRow.push(1)
+      } else {
+        newRow.push(0)
+      }
+    }
+    return newRow
+  })
+}
+
+/**
  * Returns a network.
  * @param {adjList} adjList an adjecency list defining a network layout
  */
-function network (adjList) {
+function createNetwork (adjList) {
   // remove dupes
   adjList = adjList.map(uniq)
 
@@ -90,12 +109,20 @@ function network (adjList) {
 
 module.exports = {
   matrixToList,
+  listToMatrix,
+
+  /**
+   * @param {adjList} list
+   */
+  create (list) {
+    return createNetwork(list)
+  },
 
   /**
    * @param {adjList} list
    */
   fromAdjecencyList (list) {
-    return network(list)
+    return this.create(list)
   },
 
   /**
@@ -149,7 +176,7 @@ module.exports = {
       // go to next group
       i += groupSize
     }
-    return network(adjList)
+    return createNetwork(adjList)
   },
 
   /**
@@ -174,6 +201,6 @@ module.exports = {
       adjList.push(neighbours)
     }
 
-    return network(adjList)
+    return createNetwork(adjList)
   }
 }

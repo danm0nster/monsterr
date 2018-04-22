@@ -1,27 +1,30 @@
-# Monsterr Guide (Work in Progress)
-The guide is provided as is and as such provides no guarantees that everything is up to date. The actual source is the ultimate guide to the newest version ;)
-*We suggest you read this guide first though.*
+# Monsterr Guide (WIP)
+For now this guide will serve as a working document, describing where we stand and where we want to go.
+
+Under each component I might tag sections with
+> current:
+
+or
+
+>proposal:
+
+to indicate the current state of `monsterr` and some of my proposals on where to go.
+
 
 ## Table of Contents
 
-### Introduction
-- **What is _monsterr_?**:
-  Why does *monsterr* exist and what can it do for you?
-- **Overall structure**:
-  High-level explanation of *monsterr*s structure.
+### Components
 
-### The Components
-- [The **monsterr** object](./monsterr-object.md):
-  What is this mysterious *monsterr* object?
-- [**Network**](./network.md):
-  The network part of *monsterr*.
-- [**Events**](./events.md):
-  What events are and how you use them!
-- [**Logging**](./logging.md):
-  How you can utilize logging to record what's happening in your application!
-- [**Chat**](./chat.md):
-  Access the chat without HTML and CSS. Yay!
-- [**Commands**](./commands.md):
-  Allow your users to issue commands through the chat interface!
-- [**Canvas**](./canvas.md):
-  What is the canvas? And more importantly what is [**Fabric.js**](http://fabricjs.com/)?
+Status:
+- BETA = It should be working to some degree.
+- ???? = Unknown.
+
+| component                         | status    | notes     |
+|-----------------------------------|-----------|-----------|
+| [monsterr](./project-setup.md)    | BETA      |           |
+| [network](.network.md)            | BETA      |           |
+| [events](./events.md)             | BETA      |           |
+| [logging](./logging.md)           | BETA      |           |
+| [chat](./chat.md)                 | ????      |           |
+| [commands](./commands.md)         | ????      |           |
+| [canvas](./canvas.md)             | ????      |           |
