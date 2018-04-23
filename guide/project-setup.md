@@ -4,32 +4,9 @@
 `monsterr` has a client compoment and a server compoent.
 
 ### Client (client.js)
-On the client you configure options, define event and command handlers. Calling `monsterr.run()`, *monsterr* will tie it all together for you.
+On the client you configure options, define event and command handlers.
 
 > Current:
-```js
-// client.js
-import { Client } from 'monsterr'
-
-const monsterr = Client()
-
-// optionally overwrite some default options/settings
-monsterr.options = {
-  ...
-}
-// optionally define event handlers
-monsterr.events = {
-  ...
-}
-// optionally define command handlers
-monsterr.commands = {
-  ...
-}
-// start it
-monsterr.run()
-```
-
-> Proposal:
 ```js
 // client.js
 import { createClient } from 'monsterr'
@@ -53,10 +30,6 @@ const monsterrClient = createClient({
   events,
   commands
 })
-
-// start it
-// Proposal is that the client won't have a run method and that createClient will do all the necessary work instead.
-// monsterr.run()
 ```
 
 
@@ -66,39 +39,19 @@ Server-side behaves similar to client.
 > Current:
 ```js
 //server.js
-import { Server } from 'monsterr'
-
-// optionally overwrite some default options/settings
-monsterr.options = {
-  ...
-}
-// optionally define event handlers
-monsterr.events = {
-  ...
-}
-// optionally define command handlers
-monsterr.commands = {
-  ...
-}
-// start it
-monsterr.run()
-```
-
-> Proposal:
-```js
-//server.js
 import { createServer } from 'monsterr'
 
 // optionally overwrite some default options/settings
 let options = {
   ...
+}
 
 // optionally define event handlers
 let events = {
   ...
 }
 // optionally define command handlers
-commands = {
+let commands = {
   ...
 }
 

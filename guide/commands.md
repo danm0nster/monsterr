@@ -9,17 +9,15 @@ Commands work exactly like events except you don't have to do anything to have t
 
 ```js
 // client side
-monsterr.commands = {
-  'myCmd': function(args) {
-    // args is a possibly empty array of arguments
+let commands = {
+  'myCmd': function (monsterr, ...args) {
     // return false;  <-- would stop the command from being sent to server as well
   }
 }
 // server side
-monsterr.commands = {
-  'myCmd': function(client, args) {
+let commands = {
+  'myCmd': function (monsterr, client, ...args) {
     // client is the same client object you'd get in event handlers
-    // args is a possibly empty array of arguments
   }
 }
 ```
@@ -33,8 +31,8 @@ Suppose you would like to let users add stuff like this: (why wouldn't you?)
 You could do it client side and write the result to the chat:
 ```js
 // client.js
-monsterr.commands = {
-  'add': function(args) {
+let commands = {
+  'add': function(monsterr, ...args) {
     var result = args.reduce(function(sum, arg) {
       return sum + parseInt(arg);
     }, 0);
@@ -47,8 +45,8 @@ monsterr.commands = {
 Or you could do it server side and log the result:
 ```js
 // server.js
-monsterr.commands = {
-  'add': function(args) {
+let commands = {
+  'add': function(monsterr, client, ...args) {
     var result = args.reduce(function(sum, arg) {
       return sum + parseInt(arg);
     }, 0);

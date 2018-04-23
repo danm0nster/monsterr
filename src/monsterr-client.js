@@ -1,65 +1,90 @@
 /* globals io $ fabric */
 
-/* Intentional global. Maybe one day we can get rid of it. */
-// setup socket
-const socket = io()
+let socket
+if (typeof io !== 'undefined') {
+  socket = io && io()
+}
 
-// setup chat
-$('form').submit(function (event) {
-  event.preventDefault()
+/* Chat */
+function preprendChatMessage (msg) {
+  $('#messages').prepend($('<li>').text(msg))
+}
+function clearChat () { $('#messages').html('') }
 
-  // parse whatever input the user submitted
-  parseInput($('#m').val())
-  $('#m').val('')
+function createChat (monsterr) {
+  $('form').submit(function (event) {
+    event.preventDefault()
 
-  return false
-})
+    // parse whatever input the user submitted
+    let { chatMsg, cmd } = parseInput($('#m').val())
+    $('#m').val('')
 
-function parseInput (string) {
-  if (string.substring(0, 1) === '/') {
-    // treat as command
-    const args = string.substring(1).split(' ')
-    const cmd = args[0]
-    // send to server
-    handleCommand(cmd, args.splice(1))
-  } else {
-    // treat as chat message
-    socket.emit('_msg', string)
+    if (chatMsg) {
+      socket.emit('_msg', chatMsg)
+    } else if (cmd) {
+      let args = cmd.split(' ')
+      handleCommand(...args)
+    }
+
+    return false
+  })
+
+  function parseInput (string) {
+    let chatMsg
+    let cmd
+
+    if (string.substring(0, 1) === '/') {
+      // treat as command
+      cmd = string.substring(1)
+    } else {
+      chatMsg = string
+    }
+
+    return { chatMsg, cmd }
+  }
+
+  function handleCommand (cmd, ...args) {
+    let fn = monsterr.getCommands()[cmd]
+    if (!fn || fn(monsterr, ...args) !== false) {
+      socket.emit('_cmd', { cmd, args })
+    }
   }
 }
 
-const handleCommand = function (cmd, args) {
-  let fn = monsterr.commands[cmd]
-  if (fn && fn(args)) {
-    socket.emit('_cmd', { cmd, args })
-  }
-}
-
-// attach events, this will connect all the custom and internal events to the actual socket.io events
-const attachEvents = function (socket, events) {
+function attachEvents (monsterr, socket, events) {
   Object.keys(events).forEach(function (key, index) {
     socket.on(key, function (params) {
-      events[key](params)
+      events[key](monsterr, params)
     })
   })
 }
 
-// setup canvas helper
-const setupCanvas = function (that) {
-  // get canvas
-  const canvas = that.canvas
+function send (topic, message) {
+  socket.emit(topic, message)
+}
+
+function log (msg, fileOrExtra, extra) {
+  send('_log', { msg, fileOrExtra, extra })
+}
+
+const createCanvas = function (options) {
+  let canvas = options.staticCanvas
+    ? new fabric.StaticCanvas('canvas')
+    : new fabric.Canvas('canvas')
+
   // apply background-color
-  canvas.setBackgroundColor(that.options.canvasBackgroundColor)
+  canvas.setBackgroundColor(options.canvasBackgroundColor)
 
   // resize the canvas to fill browser window dynamically
-  window.addEventListener('resize', resizeCanvas, false)
-
   function resizeCanvas () {
     canvas.setWidth(window.innerWidth)
-    canvas.setHeight(window.innerHeight - that.options.chatHeight)
+    canvas.setHeight(window.innerHeight - options.chatHeight)
     canvas.renderAll()
   }
+  window.addEventListener('resize', resizeCanvas, false)
   resizeCanvas()
+
+  return canvas
 }
 
 const defaultOptions = {
@@ -67,63 +92,49 @@ const defaultOptions = {
   chatHeight: 200,
   canvasBackgroundColor: '#999'
 }
-const events = {
-  '_msg' (msg) {
+const builtinEvents = {
+  '_msg' (_, msg) {
     $('#messages').prepend($('<li>').text(msg))
-  },
-  '_group_assignment' (msg) {
-    $('#messages').prepend($('<li>').text('You\'ve been assigned group #' + msg.groupId))
   }
 }
-const commands = {
-  'clear' (args) {
+const builtinCommands = {
+  'clear' (_, ...args) {
     $('#messages').html('')
     return false // don't send this
   }
 }
 
-const monsterr = {
-  options: {},
-  events: {},
-  commands: {},
-  canvas: null,
+function createClient ({
+  options = {},
+  events = {},
+  commands = {}
+} = {}) {
+  options = Object.assign(defaultOptions, options)
+  commands = Object.assign(builtinCommands, commands)
+  const canvas = createCanvas(options)
 
-  // wrap socket.io methods
-  send (topic, message) {
-    socket.emit(topic, message)
-  },
-
-  run () {
-    this.options = Object.assign(defaultOptions, this.options)
-    this.commands = Object.assign(commands, this.commands)
-
-    // initiate canvas
-    if (this.options.staticCanvas) {
-      this.canvas = new fabric.StaticCanvas('canvas')
-    } else {
-      this.canvas = new fabric.Canvas('canvas')
-    }
-    setupCanvas(this)
-
-    // attach the events
-    attachEvents(socket, events) // internal
-    attachEvents(socket, this.events) // & custom
-  },
-
-  log (msg, fileOrExtra, extra) {
-    this.send('_log', {
-      msg, fileOrExtra, extra
-    })
-  },
-
-  chat: {
-    prepend (msg) {
-      $('#messages').prepend($('<li>').text(msg))
-    },
-    clear () {
-      $('#messages').html('')
-    }
+  const chat = {
+    prepend (msg) { preprendChatMessage(msg) },
+    clear () { clearChat() }
   }
+
+  /** API */
+  const monsterr = {
+    canvas,
+    send,
+    log,
+    chat,
+
+    getCommands () { return commands },
+    getEvents () { return events }
+  }
+
+  attachEvents(monsterr, socket, builtinEvents)
+  attachEvents(monsterr, socket, events)
+
+  createChat(monsterr)
+
+  return monsterr
 }
 
-module.exports = monsterr
+module.exports = createClient

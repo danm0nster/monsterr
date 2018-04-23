@@ -13,7 +13,7 @@ canvas.add(/* fabric object */);
 The available network related options (and their defaults) are:
 ```js
 options = {
-  staticCanvas: false,        // objects on the canvas are dynamic and can be moved, resized and more
-  canvasBackgroundColor: #999 // the canvas is per default grey
+  staticCanvas: false,          // objects on the canvas are dynamic and can be moved, resized and more
+  canvasBackgroundColor: '#999' // the canvas is per default grey
 }
 ```

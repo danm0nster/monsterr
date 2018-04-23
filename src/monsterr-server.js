@@ -1,7 +1,3 @@
-
-const Server = require('http').Server
-const IO = require('socket.io')
-
 const Logger = require('./logger')
 const Network = require('./network')
 
@@ -47,7 +43,7 @@ const defaultOptions = {
 }
 
 /* Events */
-const internalEvents = {
+const builtinEvents = {
   _msg (monsterr, client, msg) {
     // relay chat messages to group members
     client.send('_msg', msg).toNeighbours() // this includes self
@@ -56,75 +52,63 @@ const internalEvents = {
     monsterr.log(json.msg, json.fileOrExtra, json.extra)
   },
   _cmd (monsterr, client, json) {
-    Object.keys(monsterr.commands).forEach(function (key, index) {
-      if (key === json.cmd) {
-        // simply run it
-        monsterr.commands[json.cmd](client, json.args)
-      };
+    if (monsterr.getCommands()[json.cmd]) {
+      monsterr.getCommands()[json.cmd](monsterr, client, ...json.args)
+    }
+  }
+}
+
+module.exports = (opts, io, startServer) => {
+  function createServer ({
+    network = Network.pairs(16),
+    logger = Logger({}),
+    options = {},
+    events = {},
+    commands = {}
+  } = {}) {
+    options = Object.assign(defaultOptions, options)
+
+    io.on('connection', (socket) => {
+      console.log('user ' + socket.id + ' connected!')
+      network.addPlayer(socket.id)
+
+      attachEvents(monsterr, io, socket, builtinEvents)
+      attachEvents(monsterr, io, socket, events)
+
+      socket.on('disconnect', () => {
+        console.log('user ' + socket.id + ' disconnected!')
+        network.removePlayer(socket.id)
+        socket.removeAllListeners()
+      })
     })
-  }
-}
 
-/**
-  * Simply wires up the express app with monsterr
-  * @param {*} app
-  */
-function monsterrServer (app) {
-  const http = Server(app)
-  const io = IO(http)
+    function run () { startServer(options.port) }
 
-  /**
-    *  The monsterr object.
-    * This object is exposed to the game and in turn exposes required
-    * functionality to the game. It is intended as a single touchpoint
-    * for games and the framework.
-    */
-  const monsterr = {
-    network: null, // initialized in run
-    logger: Logger({}),
-    events: {}, // custom events (to be filled by game)
-    options: {}, // custom options (to be filled by game)
-    commands: {}, // custom commands (to be filled by game)
-
-    // should be called by the game when ready
-    run () {
-      this.options = Object.assign(defaultOptions, this.options)
-      if (!this.network) { // hasn't been initialized
-        this.network = Network.pairs(4)
+    function send (topic, message) {
+      return {
+        toAll () { io.emit(topic, message) },
+        toClient (socketId) { io.to(socketId).emit(topic, message) }
       }
+    }
 
-      // wire sockets
-      io.on('connection', (socket) => {
-        console.log('user ' + socket.id + ' connected!')
-        this.network.addPlayer(socket.id)
+    function log (msg, fileOrExtra, extra) {
+      return logger.log(msg, fileOrExtra, extra)
+    }
 
-        attachEvents(monsterr, io, socket, internalEvents)
-        attachEvents(monsterr, io, socket, this.events)
+    /** API */
+    const monsterr = {
+      network,
 
-        socket.on('disconnect', () => {
-          console.log('user ' + socket.id + ' disconnected!')
-          this.network.removePlayer(socket.id)
-          socket.removeAllListeners()
-        })
-      })
+      run,
+      send,
+      log,
 
-      // start server
-      http.listen(this.options.port, () => {
-        console.log('listening on ' + this.options.port)
-      })
-    },
+      getCommands () { return commands },
+      getEvents () { return events }
+    }
 
-    /* general messaging */
-    send: (topic, message) => ({
-      toAll () { io.emit(topic, message) },
-      toClient (socketId) { io.to(socketId).emit(topic, message) }
-    }),
-
-    /* logging */
-    log (msg, fileOrExtra, extra) { this.logger.log(msg, fileOrExtra, extra) }
+    return monsterr
   }
 
-  return monsterr
+  return createServer(opts)
 }
-
-module.exports = monsterrServer

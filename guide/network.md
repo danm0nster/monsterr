@@ -18,10 +18,7 @@ Right now the network is used for two things.
 Primarily it allows the developer to access the graph structure and utilize that whatever way is wanted. In event handlers the network is used to make communicating based on graph structure especially easy.
 It's secondary use is in chat. Chat messages are by default sent to neighbours only.
 
-
-> Current/Proposal: This is implemented except that you can't yet import `Network` and you can't yet pass it to `monsterr`. Should be done soon.
-
-There should be a default network setting (clique maybe), but you should easily be able to specify any arbitrary network configuration.
+By default the network is configured with `Network.pairs(16)`. You can use any other configuration you like.
 
 ```js
 import { Network } from 'monsterr'
@@ -51,7 +48,6 @@ let myNetwork = Network.solo(6) // playerCount
 
 // make the server use it
 const monsterrServer = createServer({
-  ...,
   network: myNetwork 
 })
 ```
@@ -69,7 +65,7 @@ let myNetwork = Network.fromAdjecencyList([
 ])
 ```
 
-> Proposal 2:
+> Proposal:
 
 The current implementation only allows for a set number of clients. I propose supporting a variable number of clients. The way I would approach that is using a `grow` function that specifies how a network grows.
 

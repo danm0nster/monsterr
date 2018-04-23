@@ -1,6 +1,8 @@
 const express = require('express')
 const app = express()
 const path = require('path')
+const http = require('http').Server(app)
+const io = require('socket.io')(http)
 
 const monsterrServer = require('./monsterr-server')
 
@@ -12,5 +14,9 @@ app.use('/assets', express.static('assets'))
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, '../index.html')))
 app.get('/fabric', (req, res) => res.sendFile(path.join(__dirname, '../imports', 'fabric-2.2.3.js')))
 
-// Export it
-module.exports = monsterrServer(app)
+// Options are passed through to createServer inside of module
+module.exports = opts => monsterrServer(opts, io, (port = 3000) => {
+  http.listen(port, () => {
+    console.log('listening on ' + port)
+  })
+})
