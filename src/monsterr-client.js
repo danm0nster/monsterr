@@ -2,7 +2,7 @@
 
 let socket
 if (typeof io !== 'undefined') {
-  socket = io && io()
+  socket = io && io('/clients')
 }
 
 /* Chat */
@@ -134,7 +134,12 @@ function createClient ({
 
   createChat(monsterr)
 
-  return monsterr
+  return new Promise((resolve, reject) => {
+    socket.on('connect', () => {
+      monsterr.id = socket.id
+      resolve(monsterr)
+    })
+  })
 }
 
 module.exports = createClient

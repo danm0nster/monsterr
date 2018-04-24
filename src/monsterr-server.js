@@ -64,16 +64,26 @@ module.exports = (opts, io, startServer) => {
     logger = Logger({}),
     options = {},
     events = {},
-    commands = {}
+    commands = {},
+    adminCommands = {}
   } = {}) {
     options = Object.assign(defaultOptions, options)
 
-    io.on('connection', (socket) => {
+    // Admin connect to /admin namespace
+    const adminNsp = io.of('/admin')
+    adminNsp.on('connection', (socket) => {
+      attachEvents(monsterr, adminNsp, socket, adminCommands)
+      console.log('admin connected!')
+    })
+
+    // Clients connect to default namespace
+    const clientsNsp = io.of('/clients')
+    clientsNsp.on('connection', (socket) => {
       console.log('user ' + socket.id + ' connected!')
       network.addPlayer(socket.id)
 
-      attachEvents(monsterr, io, socket, builtinEvents)
-      attachEvents(monsterr, io, socket, events)
+      attachEvents(monsterr, clientsNsp, socket, builtinEvents)
+      attachEvents(monsterr, clientsNsp, socket, events)
 
       socket.on('disconnect', () => {
         console.log('user ' + socket.id + ' disconnected!')
@@ -86,8 +96,8 @@ module.exports = (opts, io, startServer) => {
 
     function send (topic, message) {
       return {
-        toAll () { io.emit(topic, message) },
-        toClient (socketId) { io.to(socketId).emit(topic, message) }
+        toAll () { clientsNsp.emit(topic, message) },
+        toClient (socketId) { clientsNsp.to(socketId).emit(topic, message) }
       }
     }
 
