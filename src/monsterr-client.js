@@ -134,12 +134,17 @@ function createClient ({
 
   createChat(monsterr)
 
-  return new Promise((resolve, reject) => {
-    socket.on('connect', () => {
-      monsterr.id = socket.id
-      resolve(monsterr)
-    })
-  })
+  return monsterr
+  /* In the future we might have to handle clients connecting,
+   * so that the client code can rely on client being initialized
+   * properly.
+   */
+  // return new Promise((resolve, reject) => {
+  //   socket.on('connect', () => {
+  //     monsterr.id = socket.id
+  //     resolve(monsterr)
+  //   })
+  // })
 }
 
 module.exports = createClient
