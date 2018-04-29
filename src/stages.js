@@ -4,7 +4,7 @@ function runStage (monsterr, {
   options: {
     duration,
     time
-  }
+  } = {}
 }, onTimeout) {
   let timer
   if (duration && time) {
@@ -32,7 +32,7 @@ function runStageOnServer (monsterrServer, {
   options: {
     timeOnServer,
     duration
-  },
+  } = {},
   serverSide
 }, onTimeout) {
   return runStage(monsterrServer, {
@@ -57,7 +57,7 @@ function runStageOnClient (monsterrClient, {
   options: {
     timeOnServer,
     duration
-  },
+  } = {},
   clientSide
 }, onTimeout) {
   return runStage(monsterrClient, {
