@@ -2,8 +2,9 @@
   "name": "monsterr",
   "version": "0.1.1",
   "description": "Node.js framework for designing socioeconomic experiments.",
-  "main": "index.js",
+  "main": "dist/index.js",
   "scripts": {
+    "build": "babel src -d dist",
     "test": "jest"
   },
   "author": "skbogner",
@@ -14,6 +15,9 @@
     "winston": "^2.4.1"
   },
   "devDependencies": {
+    "babel-cli": "^6.26.0",
+    "babel-plugin-transform-object-rest-spread": "^6.26.0",
+    "babel-preset-env": "^1.6.1",
     "eslint": "^4.19.1",
     "eslint-config-standard": "^11.0.0",
     "eslint-plugin-import": "^2.11.0",

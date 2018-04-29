@@ -1,6 +1,8 @@
 ## Sample stuff
 NOTES.md
 
+dist/
+
 # Logs
 logs
 *.log

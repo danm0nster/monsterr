@@ -44,7 +44,10 @@
 
         if (input.substring(0, 1) === '/') {
           let args = input.substring(1).split(' ') 
-          socket.emit(args[0], ...args.slice(1))
+          socket.emit('cmd', {
+            type: args[0],
+            args: args.slice(1)
+          })
         }
       })
     </script>

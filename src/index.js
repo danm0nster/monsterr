@@ -5,10 +5,10 @@
  * end up passing some options through from here and to createServer
  * inside of monster-server.js.
  */
-const createServer = (opts) => eval(`require('./src/express-server')(opts)`)
-const createClient = require('./src/monsterr-client')
+const createServer = require('./express-server')
+// const createClient = require('./src/monsterr-client')
 
-module.exports.createServer = createServer
-module.exports.createClient = createClient
+module.exports = createServer
+// module.exports.createClient = createClient
 
-module.exports.Network = require('./src/network')
+module.exports.Network = require('./network')
