@@ -4,7 +4,7 @@ function runStage (monsterr, {
   options: {
     duration,
     time
-  }
+  } = {}
 }, onTimeout) {
   let timer
   if (duration && time) {
@@ -32,7 +32,7 @@ function runStageOnServer (monsterrServer, {
   options: {
     timeOnServer,
     duration
-  },
+  } = {},
   serverSide
 }, onTimeout) {
   return runStage(monsterrServer, {
@@ -57,7 +57,7 @@ function runStageOnClient (monsterrClient, {
   options: {
     timeOnServer,
     duration
-  },
+  } = {},
   clientSide
 }, onTimeout) {
   return runStage(monsterrClient, {
@@ -126,6 +126,7 @@ function createManager (monsterr, stages = []) {
     }
 
     let stage = stages[currentStage]
+    console.log(stage, currentStage)
 
     stopStage = runStageOnServer(monsterr, stage, nextStage)
     monsterr.send('_start_stage', currentStage).toAll()

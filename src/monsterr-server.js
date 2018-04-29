@@ -42,7 +42,7 @@ export default (opts, startServer) => {
     events = {},
     commands = {},
     adminCommands = {},
-    stages = {}
+    stages = []
   } = {}) {
     options = Object.assign(defaultOptions, options)
 
