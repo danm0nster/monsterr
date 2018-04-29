@@ -126,6 +126,7 @@ function createManager (monsterr, stages = []) {
     }
 
     let stage = stages[currentStage]
+    console.log(stage, currentStage)
 
     stopStage = runStageOnServer(monsterr, stage, nextStage)
     monsterr.send('_start_stage', currentStage).toAll()
