@@ -1,9 +1,8 @@
-const { EventEmitter } = require('events')
+import createManager from './stages'
+import { createHttpServer, createSocketServer } from './express-server'
 
 const Logger = require('./logger')
 const Network = require('./network')
-
-const { createManager } = require('./stages')
 
 const defaultOptions = {
   port: 3000
@@ -14,7 +13,7 @@ const builtinAdminCommands = {
     monsterr.start()
   },
   next (monsterr) {
-    monsterr.getStageManager().nextStage()
+    monsterr.getStageManager().next()
   },
   reset (monsterr) {
     monsterr.getStageManager().reset()
@@ -23,123 +22,129 @@ const builtinAdminCommands = {
 
 const builtinEvents = {
   _msg (monsterr, clientId, msg) {
-    // relay chat messages to group members
     monsterr.send('_msg', msg).toNeighboursOf(clientId)
   },
   _log (monsterr, _, json) {
     monsterr.log(json.msg, json.fileOrExtra, json.extra)
   },
-  _stage_finished (monsterr, _, stageNo) {
-    monsterr.getStageManager().playerFinishedStage(stageNo)
+  _stage_finished (monsterr, clientId, stageNo) {
+    monsterr.getStageManager().playerFinishedStage(clientId, stageNo)
   }
 }
 
-export default (opts, startServer) => {
-  function createServer ({
-    network = Network.pairs(16),
-    logger = Logger({}),
-    options = {},
-    events = {},
-    commands = {},
-    adminCommands = {},
-    stages = []
-  } = {}) {
-    options = Object.assign(defaultOptions, options)
+export default function createServer ({
+  network = Network.pairs(16),
+  logger = Logger({}),
+  options = {},
+  events = {},
+  commands = {},
+  adminCommands = {},
+  stages = []
+} = {}) {
+  let stageManager
+  const socketServer = createSocketServer()
 
-    /**
-     * Using an emitter to abstract away sending events to and from clients.
-     */
-    const emitter = new EventEmitter()
+  options = Object.assign(defaultOptions, options)
 
-    function send (topic, message) {
-      let event = { type: topic, payload: message }
-      return {
-        toAll () {
-          emitter.emit('eventAll', event)
-        },
-        toClient (socketId) {
-          emitter.emit('eventClients', event, [socketId])
-        },
-        toNeighboursOf (socketId) {
-          emitter.emit('eventClients', event, [socketId].concat(monsterr.network.getNeighbours(socketId)))
-        },
-        toNeighboursOfExclusive (socketId) {
-          emitter.emit('eventClients', event, monsterr.network.getNeighbours(socketId))
-        },
-        toClients (clients = []) {
-          emitter.emit('eventClients', event, clients)
-        },
-        toAdmin () {
-          emitter.emit('eventAdmin', event)
-        }
+  function send (topic, message) {
+    let event = { type: topic, payload: message }
+    return {
+      toAll () {
+        socketServer.sendEvent(event).toAll()
+      },
+      toClient (clientId) {
+        socketServer.sendEvent(event).toClients([clientId])
+      },
+      toNeighboursOf (clientId) {
+        socketServer.sendEvent(event).toClients([clientId].concat(network.getNeighbours(clientId)))
+      },
+      toNeighboursOfExclusive (clientId) {
+        socketServer.sendEvent(event).toClients(network.getNeighbours(clientId))
+      },
+      toClients (clients = []) {
+        socketServer.sendEvent(event).toClients(clients)
+      },
+      toAdmin () {
+        socketServer.sendEvent(event).toAdmin()
       }
     }
-
-    /** Manage stages */
-    let stageManager
-
-    function run () {
-      startServer(options.port)
-      stageManager = createManager(monsterr, stages)
-    }
-
-    function start () {
-      stageManager.start()
-    }
-
-    function log (msg, fileOrExtra, extra) {
-      return logger.log(msg, fileOrExtra, extra)
-    }
-
-    function handleCommand ({ type, args, clientId }) {
-      console.log('CMD:', type, args, clientId)
-
-      // no clientID means it came from admin
-      if (!clientId) {
-        builtinAdminCommands[type] &&
-          builtinAdminCommands[type](monsterr, ...args)
-
-        adminCommands[type] &&
-          adminCommands[type](monsterr, ...args)
-      }
-
-      commands[type] &&
-        commands[type](monsterr, clientId, ...args)
-    }
-
-    function handleEvent ({ type, payload, clientId }) {
-      console.log('EVENT:', { type, payload, clientId })
-      // check builtin
-      builtinEvents[type] &&
-        builtinEvents[type](monsterr, clientId, payload)
-
-      // check provided
-      events[type] &&
-        events[type](monsterr, clientId, payload)
-    }
-
-    /** API */
-    const monsterr = {
-      network,
-
-      run,
-      start,
-      send,
-      log,
-
-      handleCommand,
-      handleEvent,
-
-      clientConnected (clientId) { network.addPlayer(clientId) },
-      clientDisconnected (clientId) { network.removePlayer(clientId) },
-
-      getStageManager () { return stageManager },
-      getCommands () { return commands },
-      getEvents () { return events }
-    }
-
-    return { monsterr, emitter }
   }
 
-  return createServer(opts)
+  function run () {
+    createHttpServer({ port: options.port })
+    stageManager = createManager({
+      getContext: () => monsterr,
+      getPlayers: () => network.getPlayers(),
+      onStageStarted: stageNo => monsterr.send('_start_stage', stageNo).toAll(),
+      onStageEnded: stageNo => monsterr.send('_end_stage', stageNo).toAll(),
+      onGameOver: () => monsterr.send('_game_over').toAll(),
+      stages
+    })
+  }
+
+  function start () {
+    stageManager.start()
+  }
+
+  function log (msg, fileOrExtra, extra) {
+    logger.log(msg, fileOrExtra, extra)
+  }
+
+  function handleCommand ({ type, args, clientId }) {
+    console.log('CMD:', type, args, clientId)
+
+    // no clientID means it came from admin
+    if (!clientId) {
+      builtinAdminCommands[type] &&
+          builtinAdminCommands[type](monsterr, ...args)
+
+      adminCommands[type] &&
+          adminCommands[type](monsterr, ...args)
+    }
+
+    commands[type] &&
+        commands[type](monsterr, clientId, ...args)
+
+    let stageCommands = stageManager.getCommands()
+    stageCommands[type] &&
+        stageCommands[type](monsterr, clientId, ...args)
+  }
+
+  function handleEvent ({ type, payload, clientId }) {
+    console.log('EVENT:', { type, payload, clientId })
+    // check builtin
+    builtinEvents[type] &&
+        builtinEvents[type](monsterr, clientId, payload)
+
+    // check provided
+    events[type] &&
+        events[type](monsterr, clientId, payload)
+
+    let stageEvents = stageManager.getEvents()
+    stageEvents[type] &&
+        stageEvents[type](monsterr, clientId, payload)
+  }
+
+  socketServer.on('cmd', cmd => handleCommand(cmd))
+  socketServer.on('event', event => handleEvent(event))
+  socketServer.on('connect', player => network.addPlayer(player))
+  socketServer.on('disconnect', player => {
+    network.removePlayer(player)
+    stageManager.playerDisconnected(player)
+  })
+
+  /** API */
+  const monsterr = {
+    run,
+    start,
+    send,
+    log,
+
+    getNetwork: () => network,
+    getStageManager: () => stageManager,
+    getCommands: () => commands,
+    getEvents: () => events
+  }
+
+  return monsterr
 }

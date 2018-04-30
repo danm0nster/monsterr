@@ -93,7 +93,7 @@ function createNetwork (adjList) {
     },
 
     getPlayers () {
-      return players
+      return players.slice()
     },
 
     getNeighbours (player) {

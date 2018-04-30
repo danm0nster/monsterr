@@ -1,3 +1,5 @@
+import { EventEmitter } from 'events'
+
 // const session = require('express-session')({
 //   secret: 'monstrous_secret',
 //   resave: true,
@@ -5,7 +7,6 @@
 // })
 // const sharedSession = require('express-socket.io-session')
 
-import monsterrServer from './monsterr-server'
 const express = require('express')
 const app = express()
 const path = require('path')
@@ -26,53 +27,63 @@ app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, '../admin.html
 app.get('/fabric', (req, res) => res.sendFile(path.join(__dirname, '../imports', 'fabric-2.2.3.js')))
 
 // Options are passed through to createServer inside of module
-module.exports = opts => {
-  const { monsterr: server, emitter } = monsterrServer(opts, (port) => {
-    http.listen(port, () => {
-      console.log('listening on ' + port)
+export function createHttpServer ({
+  port = 3000
+}) {
+  http.listen(port, () => {
+    console.log('listening on ' + port)
+  })
+}
+
+class SocketServer extends EventEmitter {
+  constructor () {
+    super()
+
+    this.clientsNsp = io.of('/clients')
+    this.adminNsp = io.of('/admin')
+
+    /** Connections */
+    this.clientsNsp.on('connection', socket => {
+      this.emit('connect', socket.id)
+      const withClientId = cmdOrEvent => ({ ...cmdOrEvent, clientId: socket.id })
+
+      // server.clientConnected(socket.id)
+      socket.on('cmd', cmd => this.emit('cmd', withClientId(cmd)))
+      socket.on('event', event => this.emit('event', withClientId(event)))
+
+      socket.on('disconnect', () => {
+        socket.removeAllListeners()
+        this.emit('disconnect', socket.id)
+      // server.clientDisconnected(socket.id)
+      })
     })
-  })
 
-  const clientsNsp = io.of('/clients')
-  const adminNsp = io.of('/admin')
-
-  /** Connections */
-  clientsNsp.on('connection', socket => {
-    const withClientId = cmdOrEvent => ({ ...cmdOrEvent, clientId: socket.id })
-
-    server.clientConnected(socket.id)
-    socket.on('cmd', cmd => server.handleCommand(withClientId(cmd)))
-    socket.on('event', event => server.handleEvent(withClientId(event)))
-
-    socket.on('disconnect', () => {
-      socket.removeAllListeners()
-      server.clientDisconnected(socket.id)
+    this.adminNsp.on('connection', socket => {
+      socket.on('cmd', cmd => this.emit('cmd', cmd))
+      socket.on('disconnect', () => socket.removeAllListeners())
     })
-  })
+  }
 
-  adminNsp.on('connection', socket => {
-    socket.on('cmd', cmd => server.handleCommand(cmd))
-    socket.on('disconnect', () => socket.removeAllListeners())
-  })
+  send (type = 'event', obj = {}) {
+    return {
+      toAll: () => this.clientsNsp.emit(type, obj),
+      toClients: (clients = []) =>
+        clients.length && clients.reduce(
+          (chain, client) => chain.to(client),
+          this.clientsNsp
+        ).emit(type, obj),
+      toAdmin: () => this.adminNsp.emit(type, obj)
+    }
+  }
 
-  /** Sending to clients */
-  // Events
-  emitter.on('eventAll', event => clientsNsp.emit('event', event))
-  emitter.on('eventClients', (event, clients = []) =>
-    clients.length && clients.reduce(
-      (chain, client) => chain.to(client),
-      clientsNsp
-    ).emit('event', event))
-  emitter.on('eventAdmin', event => adminNsp.emit('event', event))
+  sendCommand (cmd) {
+    return this.send('cmd', cmd)
+  }
+  sendEvent (event) {
+    return this.send('event', event)
+  }
+}
 
-  // Commands
-  emitter.on('cmdAll', cmd => clientsNsp.emit('cmd', cmd))
-  emitter.on('cmdClients', (cmd, clients) =>
-    clients.length && clients.reduce(
-      (chain, client) => chain.to(client),
-      clientsNsp
-    ).emit('cmd', cmd))
-  emitter.on('cmdAdmin', cmd => adminNsp.emit('cmd', cmd))
-
-  return server
+export function createSocketServer () {
+  return new SocketServer()
 }
