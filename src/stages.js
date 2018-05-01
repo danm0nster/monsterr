@@ -1,22 +1,31 @@
 import { uniq, difference, flattenDeep } from 'lodash'
+import isBrowser from './is-browser'
 
-function runStage (context, {
-  serverSide: {
-    events = {},
-    commands = {},
-    setup,
-    teardown
-  } = {},
+export function runStage (context, {
+  serverSide,
+  clientSide,
   options: {
     duration,
     timeOnServer
   } = {}
 }, onTimeout) {
+  const {
+    events = {},
+    commands = {},
+    setup,
+    teardown
+  } = isBrowser ? clientSide : serverSide
+
   let timer
   let terminated = false
 
   function modifiedTeardown (byTimer = false) {
     teardown && teardown(context)
+
+    if (isBrowser) {
+      context.canvas.remove(...context.canvas.getObjects())
+    }
+
     if (byTimer) {
       onTimeout && onTimeout()
     }
@@ -30,8 +39,10 @@ function runStage (context, {
     modifiedTeardown(byTimer)
   }
 
-  if (duration) {
+  if (duration && !isBrowser) {
     timer = setTimeout(() => terminateStage(true), timeOnServer ? duration : duration * 2)
+  } else if (duration) {
+    timer = setTimeout(() => terminateStage(true), duration)
   }
 
   setup && setup(context)
@@ -45,6 +56,26 @@ function runStage (context, {
 
 export function repeat (stage = {}, n = 2) {
   return Array(n).fill(stage) // _.cloneDeep(stage)?
+}
+
+export function timeOnServer (stage = {}) {
+  return {
+    ...stage,
+    options: {
+      ...stage.options,
+      timeOnServer: true
+    }
+  }
+}
+
+export function withDuration (stage = {}, duration = 10000) {
+  return {
+    ...stage,
+    options: {
+      ...stage.options,
+      duration
+    }
+  }
 }
 
 /**

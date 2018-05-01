@@ -2,7 +2,8 @@
   "name": "monsterr",
   "version": "0.1.1",
   "description": "Node.js framework for designing socioeconomic experiments.",
-  "main": "dist/index.js",
+  "main": "dist/index-node.js",
+  "browser": "dist/index-browser.js",
   "scripts": {
     "build": "babel src -d dist",
     "test": "jest src"
