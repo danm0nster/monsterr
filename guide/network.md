@@ -1,24 +1,19 @@
 # Network
+> Notice: Network is only exposed server-side. It should only be used to set up the server.
 
 Every `monsterr` game uses a network to define how clients are connected to eachother. Each node in the network represents a client.
 
-> Current:
+> **Current**:
 
 You can access the default configured network through `monsterr.network`. From the network you can retrieve players or get neighbours of a certain player.
 
 ```js
-let network = monsterr.network
+let network = monsterr.getNetwork()
 let allPlayers = network.getPlayers()
 let neighbours = network.getNeighbours(allPlayers[0]) // returns array of neigbours of first player
 ```
 
-### How is the network actually used?
-
-Right now the network is used for two things.
-Primarily it allows the developer to access the graph structure and utilize that whatever way is wanted. In event handlers the network is used to make communicating based on graph structure especially easy.
-It's secondary use is in chat. Chat messages are by default sent to neighbours only.
-
-By default the network is configured with `Network.pairs(16)`. You can use any other configuration you like.
+By default `monsterr` is configured with `Network.pairs(16)`. You can use any other configuration you like.
 
 ```js
 import { Network } from 'monsterr'
@@ -65,7 +60,7 @@ let myNetwork = Network.fromAdjecencyList([
 ])
 ```
 
-> Proposal:
+> **Proposal**:
 
 The current implementation only allows for a set number of clients. I propose supporting a variable number of clients. The way I would approach that is using a `grow` function that specifies how a network grows.
 

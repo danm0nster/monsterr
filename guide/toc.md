@@ -21,10 +21,10 @@ Status:
 
 | component                         | status    | notes     |
 |-----------------------------------|-----------|-----------|
-| [monsterr](./project-setup.md)    | BETA      |           |
-| [network](.network.md)            | BETA      |           |
+| [monsterr](./setup.md)    | BETA      |           |
+| [network](./network.md)            | BETA      |           |
 | [events](./events.md)             | BETA      |           |
 | [logging](./logging.md)           | BETA      |           |
-| [chat](./chat.md)                 | ????      |           |
-| [commands](./commands.md)         | ????      |           |
-| [canvas](./canvas.md)             | ????      |           |
+| [chat](./chat.md)                 | BETA      |           |
+| [commands](./commands.md)         | BETA      |           |
+| [canvas](./canvas.md)             | BETA      |           |

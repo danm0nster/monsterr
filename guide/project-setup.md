@@ -9,7 +9,7 @@ On the client you configure options, define event and command handlers.
 > Current:
 ```js
 // client.js
-import { createClient } from 'monsterr'
+import createClient from 'monsterr'
 
 // optionally overwrite some default options/settings
 let options = {
@@ -39,7 +39,7 @@ Server-side behaves similar to client.
 > Current:
 ```js
 //server.js
-import { createServer } from 'monsterr'
+import createServer from 'monsterr'
 
 // optionally overwrite some default options/settings
 let options = {
@@ -66,12 +66,22 @@ const monsterrServer = createServer({
 monsterrServer.run()
 ```
 
-### So what's the difference???
+## What's the difference???
+`monsterr` behaves different whether we are server-side or client-side.
+By some black magic the exports available from `monsterr` differ from server to client, but both expose functionality that is common to client and server.
 
-**TODO**
+### Server Only
+```
+createServer (default)
+Network
+```
 
-#### Canvas
-The canvas is of course only available on the client.
+### Client Only
+```
+createClient (default)
+```
 
-#### Options
-The options available on server and client are quite different as you might expect. For example there are options regarding network on the server side, whereas on the client side there are options regarding the UI.
+### Both
+```
+Stages
+```

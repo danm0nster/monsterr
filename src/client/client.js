@@ -150,10 +150,10 @@ function createClient ({
 
   /** API */
   const monsterr = {
-    canvas,
     send: sendEvent,
     log,
-    chat,
+    getCanvas: () => canvas,
+    getChat: () => chat,
 
     startStage,
     endStage,

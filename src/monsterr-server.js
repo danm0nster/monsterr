@@ -17,6 +17,10 @@ const builtinAdminCommands = {
   },
   reset (monsterr) {
     monsterr.getStageManager().reset()
+  },
+  players (monsterr) {
+    // monsterr.send('_msg', monsterr.getNetwork().getPlayers().join(', ')).toAdmin()
+    console.log(monsterr.getNetwork().getPlayers())
   }
 }
 
@@ -127,8 +131,12 @@ export default function createServer ({
 
   socketServer.on('cmd', cmd => handleCommand(cmd))
   socketServer.on('event', event => handleEvent(event))
-  socketServer.on('connect', player => network.addPlayer(player))
+  socketServer.on('connect', player => {
+    console.log(player, 'connected!')
+    network.addPlayer(player)
+  })
   socketServer.on('disconnect', player => {
+    console.log(player, 'disconnected!')
     network.removePlayer(player)
     stageManager.playerDisconnected(player)
   })
