@@ -1,4 +1,4 @@
-import { uniq, difference } from 'lodash'
+import { uniq, difference, flattenDeep } from 'lodash'
 
 function runStage (context, {
   serverSide: {
@@ -43,6 +43,10 @@ function runStage (context, {
   }
 }
 
+export function repeat (stage = {}, n = 2) {
+  return Array(n).fill(stage) // _.cloneDeep(stage)?
+}
+
 /**
  * Manages the stages on server.
  * @param {*} stages
@@ -62,6 +66,8 @@ function createManager ({
 
   let commands = {}
   let events = {}
+
+  stages = flattenDeep(stages)
 
   // We are done when all players are finished
   function checkIfDone () {
