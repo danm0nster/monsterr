@@ -15,16 +15,11 @@ to indicate the current state of `monsterr` and some of my proposals on where to
 
 ### Components
 
-Status:
-- BETA = It should be working to some degree.
-- ???? = Unknown.
-
-| component                         | status    | notes     |
-|-----------------------------------|-----------|-----------|
-| [monsterr](./setup.md)    | BETA      |           |
-| [network](./network.md)            | BETA      |           |
-| [events](./events.md)             | BETA      |           |
-| [logging](./logging.md)           | BETA      |           |
-| [chat](./chat.md)                 | BETA      |           |
-| [commands](./commands.md)         | BETA      |           |
-| [canvas](./canvas.md)             | BETA      |           |
+- [monsterr](./setup.md)
+- [network](./network.md)
+- [stages](./stages.md)
+- [events](./events.md)
+- [logging](./logging.md)
+- [chat](./chat.md)
+- [commands](./commands.md)
+- [canvas](./canvas.md)
