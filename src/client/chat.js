@@ -1,7 +1,11 @@
 /* globals $ */
 
-function prepend (msg) {
-  $('#messages').prepend($('<li>').text(msg))
+function append (msg) {
+  let height = $('#messages')[0].scrollHeight
+  console.log(height)
+  console.log(window.innerHeight)
+  $('#messages').append($('<li>').text(msg))
+  $('#messages').animate({ scrollTop: height })
 }
 
 function clear () { $('#messages').html('') }
@@ -46,7 +50,7 @@ function createChat ({
   }
 
   return {
-    prepend,
+    append,
     clear
   }
 }

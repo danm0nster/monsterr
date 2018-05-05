@@ -31,7 +31,9 @@ let clientTimedStage = {
 }
 
 let createOptions = {
-  getContext: jest.fn(),
+  getContext: jest.fn(() => ({
+    getCanvas () { return { remove () {}, getObjects () { return [] } } }
+  })),
   getPlayers: () => ['1', '2'], // fake two players
   onStageStarted: jest.fn(),
   onStageEnded: jest.fn(),
@@ -104,7 +106,7 @@ describe('manager', () => {
     expect(createOptions.onGameOver).toBeCalled()
   })
 
-  it('game is over when last stage is done, nothing further happens', () => {
+  it('after game over, nothing further happens', () => {
     let man = createManager({
       ...createOptions,
       stages: [regularStage, timedStage]
@@ -153,36 +155,15 @@ describe('manager', () => {
     expect(createOptions.onStageEnded).toBeCalledWith(0)
   })
 
-  it('client-timed stage terminates when all clients finished', (done) => {
+  it('client-timed stage terminates after duration', (done) => {
     let man = createManager({
       ...createOptions,
       stages: [clientTimedStage]
     })
     man.start()
-    // Wait longer than stage duration to make sure it isnt terminated
     setTimeout(() => {
-      expect(createOptions.onStageEnded).not.toBeCalledWith(0)
-      // simulate the two players finishing
-      man.playerFinishedStage('1', 0)
-      man.playerFinishedStage('2', 0)
       expect(createOptions.onStageEnded).toBeCalledWith(0)
       done()
     }, 110)
-  })
-
-  it('client-timed stage terminates after 2xduration', (done) => {
-    let man = createManager({
-      ...createOptions,
-      stages: [clientTimedStage]
-    })
-    man.start()
-    // Wait longer than stage duration to make sure it isnt terminated
-    setTimeout(() => {
-      expect(createOptions.onStageEnded).not.toBeCalledWith(0)
-    }, 180)
-    setTimeout(() => {
-      expect(createOptions.onStageEnded).toBeCalledWith(0)
-      done()
-    }, 220)
   })
 })

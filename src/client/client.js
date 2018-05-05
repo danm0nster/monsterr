@@ -13,7 +13,7 @@ const defaultOptions = {
 
 const builtinEvents = {
   _msg (monsterr, msg) {
-    monsterr.chat.prepend(msg)
+    monsterr.getChat().append(msg)
   },
   _start_stage (monsterr, stageNo) {
     console.log('_start_stage', stageNo)
@@ -29,7 +29,7 @@ const builtinEvents = {
 }
 const builtinCommands = {
   clear (monsterr, ...args) {
-    monsterr.chat.clear()
+    monsterr.getChat().clear()
     return false // don't send this
   }
 }
@@ -164,7 +164,9 @@ function createClient ({
 
     getCommands () { return commands },
     getEvents () { return events },
-    getStages () { return stages }
+    getStages () { return stages },
+
+    renderHtml: html => $('#html-container').html(html)
   }
 
   /** Events */

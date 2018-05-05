@@ -2,6 +2,7 @@ import { uniq, difference, flattenDeep } from 'lodash'
 import isBrowser from './is-browser'
 
 export function runStage (context, {
+  html,
   serverSide,
   clientSide,
   options: {
@@ -19,11 +20,16 @@ export function runStage (context, {
   let timer
   let terminated = false
 
+  if (html && isBrowser) {
+    context.renderHtml(html)
+  }
+
   function modifiedTeardown (byTimer = false) {
     teardown && teardown(context)
 
     if (isBrowser) {
-      context.canvas.remove(...context.canvas.getObjects())
+      context.getCanvas().remove(...context.getCanvas().getObjects())
+      context.renderHtml('')
     }
 
     if (byTimer) {
