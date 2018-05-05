@@ -1,10 +1,10 @@
+/* globals fabric $ */
 import { debounce, clamp } from 'lodash'
 
-/* globals fabric */
 function createCanvas ({
   staticCanvas = false,
   canvasBackgroundColor = '#999',
-  hideChat = false,
+  getUsedWidth = () => 0,
   htmlContainerHeight = 0
 }) {
   let canvas = staticCanvas
@@ -16,12 +16,13 @@ function createCanvas ({
 
   // resize the canvas to fill browser window dynamically
   function resizeCanvas () {
-    canvas.setWidth(window.innerWidth - (hideChat ? 0 : 300))
+    canvas.setWidth(window.innerWidth - getUsedWidth())
     canvas.setHeight(window.innerHeight - clamp(htmlContainerHeight, 0, 1) * window.innerHeight)
     canvas.renderAll()
   }
-  window.addEventListener('resize', debounce(resizeCanvas, 10), false)
   resizeCanvas()
+
+  $(window).resize(debounce(resizeCanvas, 10))
 
   return canvas
 }

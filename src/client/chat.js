@@ -1,19 +1,23 @@
 /* globals $ */
 
 function append (msg) {
-  let height = $('#messages')[0].scrollHeight
-  console.log(height)
-  console.log(window.innerHeight)
   $('#messages').append($('<li>').text(msg))
+
+  let height = $('#messages')[0].scrollHeight
   $('#messages').animate({ scrollTop: height })
 }
 
-function clear () { $('#messages').html('') }
+function clear () {
+  $('#messages').html('')
+}
 
 function createChat ({
   onCmd,
-  onMsg
+  onMsg,
+  hidden = false
 }) {
+  if (hidden) { hide() }
+
   $('form').submit(function (event) {
     event.preventDefault()
 
@@ -49,7 +53,31 @@ function createChat ({
     return { chatMsg, cmd }
   }
 
+  function hide () {
+    hidden = true
+    $('#chat-container').css('display', 'none')
+    $(window).trigger('resize')
+  }
+
+  function show () {
+    hidden = false
+    $('#chat-container').css('display', 'flex')
+    $(window).trigger('resize')
+  }
+
+  function toggle () {
+    if (hidden) {
+      show()
+    } else {
+      hide()
+    }
+  }
+
   return {
+    isHidden: () => hidden,
+    toggle,
+    hide,
+    show,
     append,
     clear
   }

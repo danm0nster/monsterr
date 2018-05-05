@@ -31,6 +31,9 @@ const builtinCommands = {
   clear (monsterr, ...args) {
     monsterr.getChat().clear()
     return false // don't send this
+  },
+  hideChat (monsterr) {
+    monsterr.getChat().hide()
   }
 }
 
@@ -79,10 +82,14 @@ function createClient ({
     sendEvent('_log', { msg, fileOrExtra, extra })
   }
 
-  const canvas = createCanvas(options)
   const chat = createChat({
     onCmd: (cmd, ...args) => handleCommand(cmd),
-    onMsg: msg => sendEvent('_msg', msg)
+    onMsg: msg => sendEvent('_msg', msg),
+    hidden: options.hideChat || false
+  })
+  const canvas = createCanvas({
+    ...options,
+    getUsedWidth: () => chat.isHidden() ? 0 : 300
   })
 
   function handleEvent ({ type, payload }) {
