@@ -7,7 +7,8 @@ export function runStage (context, {
   clientSide,
   options: {
     duration,
-    timeOnServer
+    timeOnServer,
+    htmlContainerHeight
   } = {}
 }, onTimeout) {
   const {
@@ -20,14 +21,18 @@ export function runStage (context, {
   let timer
   let terminated = false
 
-  if (html && isBrowser) {
-    context.renderHtml(html)
+  let preHtmlContainerHeight
+  if (isBrowser) {
+    html && context.renderHtml(html)
+    preHtmlContainerHeight = context.getHtmlContainer().getHeightRatio()
+    htmlContainerHeight && context.getHtmlContainer().setHeightRatio(htmlContainerHeight)
   }
 
   function modifiedTeardown (byTimer = false) {
     teardown && teardown(context)
 
     if (isBrowser) {
+      preHtmlContainerHeight && context.getHtmlContainer().setHeightRatio(preHtmlContainerHeight)
       context.getCanvas().remove(...context.getCanvas().getObjects())
       context.renderHtml('')
     }

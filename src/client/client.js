@@ -3,6 +3,7 @@ import { flattenDeep } from 'lodash'
 
 import createChat from './chat.js'
 import createCanvas from './canvas.js'
+import createHtmlContainer from './html-container'
 import { runStage } from '../stages.js'
 
 const defaultOptions = {
@@ -87,9 +88,11 @@ function createClient ({
     onMsg: msg => sendEvent('_msg', msg),
     hidden: options.hideChat || false
   })
+  const htmlContainer = createHtmlContainer(options)
   const canvas = createCanvas({
     ...options,
-    getUsedWidth: () => chat.isHidden() ? 0 : 300
+    getUsedWidth: () => chat.isHidden() ? 0 : 300,
+    getUsedHeight: () => htmlContainer.getHeightAbs()
   })
 
   function handleEvent ({ type, payload }) {
@@ -159,8 +162,10 @@ function createClient ({
   const monsterr = {
     send: sendEvent,
     log,
-    getCanvas: () => canvas,
+
     getChat: () => chat,
+    getHtmlContainer: () => htmlContainer,
+    getCanvas: () => canvas,
 
     startStage,
     endStage,
@@ -173,7 +178,7 @@ function createClient ({
     getEvents () { return events },
     getStages () { return stages },
 
-    renderHtml: html => $('#html-container').html(html)
+    renderHtml: html => htmlContainer.render(html)
   }
 
   /** Events */

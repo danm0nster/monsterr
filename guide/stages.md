@@ -129,3 +129,61 @@ export default [
   Stages.timeOnServer(stage1)
 ]
 ```
+
+# Html Container
+
+It is possible to add HTML to your stages. This can be useful if you have to present something better structured as HTML or if you want to take some inputs from the user.
+
+You can create html files within your existing stage structure: ex.
+
+```html
+<!-- .../stage1/some.html -->
+<div id="myDiv">
+  <h1>Hi!</h1>
+</div>
+```
+And import them when combining the stage.
+
+```js
+// .../stage1/index.js
+import html from './some.html'
+...
+export default {
+  serverSide,
+  clientSide,
+  html,           // <== make sure to include them
+  options: {
+    // You can set the height of the html content
+    // for this stage only. After the stage the height
+    // will revert to default. See below.
+    htmlContainerHeight: 0.5
+  }
+}
+```
+
+In your client you can use jQuery (or native DOM) to access and/or manipulate the html.
+
+```js
+// .../stage1/client.js
+...
+$('#myDiv').html() // get contents
+$('#myDiv').html('overwrite contents')
+```
+
+## htmlContainerHeight
+`htmlContainerHeight` defines the height of the html content. It is specified as a ratio of screen height.
+By default `htmlContainerHeight` will be `0.3` (30% of height).
+
+- `htmlContainerHeight = 0`: htmlContent is completely hidden.
+- `htmlContainerHeight = 1`: htmlContent fills entire height (canvas will be hidden).
+
+You can change the height per stage as mentioned above or you can set a different default when creating your client.
+
+```js
+// client.js
+...createClient({
+  options: {
+    htmlContainerHeight: 0 // hide html by default
+  }
+})
+```
