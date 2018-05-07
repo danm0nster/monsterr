@@ -29,7 +29,7 @@
       #canvas { flex: 1; }
       #html-container {
         flex: 1;
-        border-top: 1px solid black;
+        /* border-top: 1px solid black; */
         overflow: hidden; overflow-y: auto;
       }
       #chat-container {
@@ -95,6 +95,9 @@
     <!-- Internal -->
     <script src="fabric"></script>
     
-    <script src="client.js"></script>
+    <script>
+      let isAdmin = window.location.pathname === '/admin'
+      $.getScript(isAdmin ? 'admin-client.js' : 'client.js')
+    </script>
   </body>
 </html>

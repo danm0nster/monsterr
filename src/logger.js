@@ -1,9 +1,9 @@
 // Logger
-const winston = require('winston')
-const path = require('path')
-const fs = require('fs')
+import winston from 'winston'
+import path from 'path'
+import fs from 'fs'
 
-module.exports = function ({
+export default function ({
   defaultLogfile = 'default',
   level = 'info'
 } = {}) {
@@ -56,23 +56,6 @@ module.exports = function ({
       } else {
         defaultLogger.log(level, msg, logfileOrExtra)
       }
-    },
-
-    getLog: function (logOrCb, cb) {
-      let logger = (typeof logOrCb === 'function')
-        ? defaultLogger
-        : loggers[logOrCb]
-
-      logger.query({
-        fields: ['message', 'extra']
-      }, function (err, res) {
-        if (err) {
-          console.log(err)
-        }
-
-        cb ? cb(res) : logOrCb(res)
-      })
     }
-
   }
 }

@@ -8,7 +8,7 @@ let namespace = isAdmin ? '/admin' : '/clients'
 let socket = io(namespace)
 
 function wrapped (opts) {
-  opts = isAdmin ? opts.admin : opts
+  opts = !isAdmin ? opts : Object.assign(opts, { adminClient: true })
 
   const { monsterr: client, emitter } = createClient(opts)
 

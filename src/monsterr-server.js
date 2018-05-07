@@ -1,8 +1,8 @@
 import createManager from './stages'
 import { createHttpServer, createSocketServer } from './express-server'
 
-const Logger = require('./logger')
-const Network = require('./network')
+import Logger from './logger'
+import * as Network from './network'
 
 const defaultOptions = {
   port: 3000
@@ -19,8 +19,7 @@ const builtinAdminCommands = {
     monsterr.getStageManager().reset()
   },
   players (monsterr) {
-    // monsterr.send('_msg', monsterr.getNetwork().getPlayers().join(', ')).toAdmin()
-    console.log(monsterr.getNetwork().getPlayers())
+    monsterr.send('_msg', monsterr.getNetwork().getPlayers().join(', ')).toAdmin()
   }
 }
 

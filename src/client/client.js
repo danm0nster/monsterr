@@ -4,68 +4,57 @@ import { flattenDeep } from 'lodash'
 import createChat from './chat.js'
 import createCanvas from './canvas.js'
 import createHtmlContainer from './html-container'
-import { runStage } from '../stages.js'
+import createStageManager from './client-stage-manager'
 
-const defaultOptions = {
-  staticCanvas: false,
-  chatHeight: 200,
-  canvasBackgroundColor: '#999'
+function handleEvent ({ type, payload }, handlers, context) {
+  console.log('EVENT:', { type, payload })
+  handlers.forEach(handler => handler[type] &&
+    handler[type](context, payload))
+}
+
+function handleCommand ({ type, args }, handlers, context) {
+  console.log('CMD:', { type, args })
+  return handlers.reduce((shouldCall, handler) => {
+    let res = handler[type] && handler[type](context, args)
+    return (res === false) ? false : shouldCall
+  }, true)
 }
 
 const builtinEvents = {
   _msg (monsterr, msg) {
     monsterr.getChat().append(msg)
-  },
+  }
+}
+
+const builtinClientOnlyEvents = {
   _start_stage (monsterr, stageNo) {
     console.log('_start_stage', stageNo)
-    monsterr.startStage(stageNo)
+    monsterr.getStageManager().startStage(stageNo)
   },
   _end_stage (monsterr, stageNo) {
     console.log('_end_stage', stageNo)
-    monsterr.endStage(stageNo)
+    monsterr.getStageManager().endStage(stageNo)
   },
   _game_over (monsterr) {
     console.log('_game_over')
   }
 }
+
 const builtinCommands = {
   clear (monsterr, ...args) {
     monsterr.getChat().clear()
     return false // don't send this
-  },
-  hideChat (monsterr) {
-    monsterr.getChat().hide()
   }
 }
-
-// function createAdminClient ({
-//   admin: {
-//     options = {},
-//     events = {},
-//     commands = {}
-//   } = {},
-//   stages = []
-// }) {
-
-//   return {
-//     chat,
-
-//   }
-// }
 
 function createClient ({
   options = {},
   events = {},
   commands = {},
-  stages = []
+  stages = [],
+  adminClient = false
 } = {}) {
   const emitter = new EventEmitter()
-
-  let stageEvents = {}
-  let stageCommands = {}
-
-  options = Object.assign(defaultOptions, options)
-  commands = Object.assign(builtinCommands, commands)
 
   stages = flattenDeep(stages)
 
@@ -84,7 +73,7 @@ function createClient ({
   }
 
   const chat = createChat({
-    onCmd: (cmd, ...args) => handleCommand(cmd),
+    onCmd: (cmd, ...args) => monsterr.handleCommand(cmd),
     onMsg: msg => sendEvent('_msg', msg),
     hidden: options.hideChat || false
   })
@@ -95,68 +84,13 @@ function createClient ({
     getUsedHeight: () => htmlContainer.getHeightAbs()
   })
 
-  function handleEvent ({ type, payload }) {
-    console.log('EVENT:', { type, payload })
-    builtinEvents[type] &&
-      builtinEvents[type](monsterr, payload)
-
-    events[type] &&
-      events[type](monsterr, payload)
-
-    stageEvents[type] &&
-      stageEvents[type](monsterr, payload)
-  }
-
-  function handleCommand ({ type, args }) {
-    console.log('CMD:', { type, args })
-
-    let builtinShouldCallServer = builtinCommands[type] &&
-      builtinCommands[type](monsterr, args)
-
-    let cmdShouldCallServer = commands[type] &&
-      commands[type](monsterr, args)
-
-    let stageShouldCallServer = stageCommands[type] &&
-      stageCommands[type](monsterr, args)
-
-    // If no handler has told us not to send cmd to server, we send it!
-    if (builtinShouldCallServer !== false && cmdShouldCallServer !== false && stageShouldCallServer !== false) {
-      sendCommand({ type, args })
+  const stageManager = !adminClient ? createStageManager({
+    stages,
+    getContext: () => monsterr,
+    onStageFinished: stageNo => {
+      monsterr.send('_stage_finished', stageNo)
     }
-  }
-
-  let stopStage
-  let currentStage = -1
-  function startStage (stageNo) {
-    if (stageNo >= stages.length) {
-      return
-    }
-    stopStage && stopStage()
-
-    currentStage = stageNo
-    let stage = stages[currentStage];
-
-    ({
-      stopStage,
-      events: stageEvents,
-      commands: stageCommands
-    } = runStage(monsterr, stage, () => {
-      console.log('timed out')
-      monsterr.send('_stage_finished', currentStage)
-    }))
-  }
-
-  function endStage (stageNo) {
-    if (stageNo === currentStage) {
-      stopStage && stopStage()
-    }
-    stageEvents = {}
-    stageCommands = {}
-  }
-
-  function stageFinished () {
-    monsterr.send('_stage_finished', currentStage)
-  }
+  }) : undefined
 
   /** API */
   const monsterr = {
@@ -166,13 +100,25 @@ function createClient ({
     getChat: () => chat,
     getHtmlContainer: () => htmlContainer,
     getCanvas: () => canvas,
+    getStageManager: () => stageManager,
 
-    startStage,
-    endStage,
-    stageFinished,
+    handleEvent: event => handleEvent(event, [
+      events,
+      builtinEvents,
+      adminClient ? {} : builtinClientOnlyEvents,
+      adminClient ? {} : stageManager.getEvents()
+    ], monsterr),
+    handleCommand: cmd => {
+      let shouldCallServer = handleCommand(cmd, [
+        commands,
+        builtinCommands,
+        adminClient ? {} : stageManager.getCommands()
+      ], monsterr)
 
-    handleEvent,
-    handleCommand,
+      if (shouldCallServer) {
+        sendCommand(cmd)
+      }
+    },
 
     getCommands () { return commands },
     getEvents () { return events },
@@ -181,19 +127,7 @@ function createClient ({
     renderHtml: html => htmlContainer.render(html)
   }
 
-  /** Events */
-
   return { monsterr, emitter }
-  /* In the future we might have to handle clients connecting,
-   * so that the client code can rely on client being initialized
-   * properly.
-   */
-  // return new Promise((resolve, reject) => {
-  //   socket.on('connect', () => {
-  //     monsterr.id = socket.id
-  //     resolve(monsterr)
-  //   })
-  // })
 }
 
 export default createClient
