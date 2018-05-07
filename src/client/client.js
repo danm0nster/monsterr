@@ -4,7 +4,7 @@ import { flattenDeep } from 'lodash'
 import createChat from './chat.js'
 import createCanvas from './canvas.js'
 import createHtmlContainer from './html-container'
-import createStageManager from './client-stage-manager'
+import createManager from './client-stage-manager'
 
 function handleEvent ({ type, payload }, handlers, context) {
   console.log('EVENT:', { type, payload })
@@ -84,7 +84,7 @@ function createClient ({
     getUsedHeight: () => htmlContainer.getHeightAbs()
   })
 
-  const stageManager = !adminClient ? createStageManager({
+  const stageManager = !adminClient ? createManager({
     stages,
     getContext: () => monsterr,
     onStageFinished: stageNo => {

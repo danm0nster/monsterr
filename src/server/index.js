@@ -1,4 +1,4 @@
-import createManager from './stages'
+import createManager from './server-stage-manager'
 import { createHttpServer, createSocketServer } from './express-server'
 
 import Logger from './logger'

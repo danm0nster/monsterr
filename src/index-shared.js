@@ -1,11 +1,5 @@
-import {
-  repeat,
-  withDuration,
-  timeOnServer
-} from './stages'
+import * as Stages from './stage-helpers'
 
-export const Stages = {
-  repeat,
-  withDuration,
-  timeOnServer
+export {
+  Stages
 }
