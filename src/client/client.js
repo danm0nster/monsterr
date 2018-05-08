@@ -95,6 +95,7 @@ function createClient ({
   /** API */
   const monsterr = {
     send: sendEvent,
+    sendCommand: (cmd, ...args) => sendCommand({ type: cmd, args: args || [] }),
     log,
 
     getChat: () => chat,

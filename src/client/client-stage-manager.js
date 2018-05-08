@@ -27,7 +27,7 @@ function runOnClient ({
   }
 
   let modifiedTeardown = () => {
-    preHtmlContainerHeight && context.getHtmlContainer().setHeightRatio(preHtmlContainerHeight)
+    context.getHtmlContainer().setHeightRatio(preHtmlContainerHeight)
     context.renderHtml('')
 
     context.getCanvas().remove(...context.getCanvas().getObjects())

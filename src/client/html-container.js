@@ -2,9 +2,11 @@
 import { clamp } from 'lodash'
 
 function createHtmlContainer ({
-  htmlContainerHeight = 0.3
+  htmlContainerHeight = 0.3,
+  html
 }) {
   htmlContainerHeight = clamp(htmlContainerHeight, 0, 1)
+  $('#html-container').html(html)
 
   return {
     setHeightRatio: newHeight => {
