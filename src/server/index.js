@@ -3,6 +3,7 @@ import { createHttpServer, createSocketServer } from './express-server'
 
 import Logger from './logger'
 import * as Network from './network'
+import { handleEvent, handleCommand } from '../util'
 
 const defaultOptions = {
   port: 3000
@@ -19,7 +20,18 @@ const builtinAdminCommands = {
     monsterr.getStageManager().reset()
   },
   players (monsterr) {
-    monsterr.send('_msg', monsterr.getNetwork().getPlayers().join(', ')).toAdmin()
+    monsterr
+      .send(
+        '_msg',
+        monsterr
+          .getNetwork()
+          .getPlayers()
+          .join(', ')
+      )
+      .toAdmin()
+  },
+  latencies (monsterr) {
+    monsterr.send('_msg', JSON.stringify(monsterr.getLatencies()))
   }
 }
 
@@ -59,10 +71,14 @@ export default function createServer ({
         socketServer.sendEvent(event).toClients([clientId])
       },
       toNeighboursOf (clientId) {
-        socketServer.sendEvent(event).toClients([clientId].concat(network.getNeighbours(clientId)))
+        socketServer
+          .sendEvent(event)
+          .toClients([clientId].concat(network.getNeighbours(clientId)))
       },
       toNeighboursOfExclusive (clientId) {
-        socketServer.sendEvent(event).toClients(network.getNeighbours(clientId))
+        socketServer
+          .sendEvent(event)
+          .toClients(network.getNeighbours(clientId))
       },
       toClients (clients = []) {
         socketServer.sendEvent(event).toClients(clients)
@@ -93,43 +109,18 @@ export default function createServer ({
     logger.log(msg, fileOrExtra, extra)
   }
 
-  function handleCommand ({ type, args, clientId }) {
-    console.log('CMD:', type, args, clientId)
+  socketServer.on('cmd', cmd => handleCommand(cmd, [
+    commands,
+    stageManager.getCommands(),
+    !cmd.clientId ? builtinAdminCommands : {},
+    !cmd.clientId ? adminCommands : {}
+  ], monsterr))
+  socketServer.on('event', event => handleEvent(event, [
+    events,
+    builtinEvents,
+    stageManager.getEvents()
+  ], monsterr))
 
-    // no clientID means it came from admin
-    if (!clientId) {
-      builtinAdminCommands[type] &&
-          builtinAdminCommands[type](monsterr, ...args)
-
-      adminCommands[type] &&
-          adminCommands[type](monsterr, ...args)
-    }
-
-    commands[type] &&
-        commands[type](monsterr, clientId, ...args)
-
-    let stageCommands = stageManager.getCommands()
-    stageCommands[type] &&
-        stageCommands[type](monsterr, clientId, ...args)
-  }
-
-  function handleEvent ({ type, payload, clientId }) {
-    console.log('EVENT:', { type, payload, clientId })
-    // check builtin
-    builtinEvents[type] &&
-        builtinEvents[type](monsterr, clientId, payload)
-
-    // check provided
-    events[type] &&
-        events[type](monsterr, clientId, payload)
-
-    let stageEvents = stageManager.getEvents()
-    stageEvents[type] &&
-        stageEvents[type](monsterr, clientId, payload)
-  }
-
-  socketServer.on('cmd', cmd => handleCommand(cmd))
-  socketServer.on('event', event => handleEvent(event))
   socketServer.on('connect', player => {
     console.log(player, 'connected!')
     network.addPlayer(player)
@@ -150,7 +141,8 @@ export default function createServer ({
     getNetwork: () => network,
     getStageManager: () => stageManager,
     getCommands: () => commands,
-    getEvents: () => events
+    getEvents: () => events,
+    getLatencies: () => socketServer.getLatencies()
   }
 
   return monsterr

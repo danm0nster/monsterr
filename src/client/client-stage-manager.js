@@ -61,8 +61,9 @@ function createManager ({
 
     currentStage = stageNo
     let stage = stages[currentStage]
-    events = stage.events || {}
-    commands = stage.commands || {}
+    let clientSide = stage.clientSide || {}
+    events = clientSide.events || {}
+    commands = clientSide.commands || {}
 
     stopStage = runOnClient({
       stage,

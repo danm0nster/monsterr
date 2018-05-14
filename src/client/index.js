@@ -13,9 +13,15 @@ function wrapped (opts) {
   const { monsterr: client, emitter } = createClient(opts)
 
   // Inbound
+  socket.on('_id', uuid => client.setId(uuid))
+  socket.on('_heartbeat', ({ latest, avg }) => {
+    console.log('heartbeat received', 'latest:', latest, 'avg:', avg)
+    socket.emit('_heartbeat_ack')
+  })
   socket.on('event', event => client.handleEvent(event))
   socket.on('disconnect', () => {
     socket.off()
+    client.disconnect()
   })
 
   // Outbound

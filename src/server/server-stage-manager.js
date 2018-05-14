@@ -99,8 +99,9 @@ function createManager ({
     }
 
     let stage = stages[currentStage]
-    events = stage.events || {}
-    commands = stage.commands || {}
+    let serverSide = stage.serverSide || {}
+    events = serverSide.events || {}
+    commands = serverSide.commands || {}
 
     stopStage = runOnServer({
       context: getContext(),

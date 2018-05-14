@@ -6,19 +6,7 @@ import createCanvas from './canvas.js'
 import createHtmlContainer from './html-container'
 import createManager from './client-stage-manager'
 
-function handleEvent ({ type, payload }, handlers, context) {
-  console.log('EVENT:', { type, payload })
-  handlers.forEach(handler => handler[type] &&
-    handler[type](context, payload))
-}
-
-function handleCommand ({ type, args }, handlers, context) {
-  console.log('CMD:', { type, args })
-  return handlers.reduce((shouldCall, handler) => {
-    let res = handler[type] && handler[type](context, args)
-    return (res === false) ? false : shouldCall
-  }, true)
-}
+import { handleEvent, handleCommand } from '../util'
 
 const builtinEvents = {
   _msg (monsterr, msg) {
@@ -44,6 +32,9 @@ const builtinCommands = {
   clear (monsterr, ...args) {
     monsterr.getChat().clear()
     return false // don't send this
+  },
+  id (monsterr) {
+    monsterr.getChat().append(monsterr.getId())
   }
 }
 
@@ -54,12 +45,13 @@ function createClient ({
   stages = [],
   adminClient = false
 } = {}) {
+  let clientId
   const emitter = new EventEmitter()
 
   stages = flattenDeep(stages)
 
-  function sendCommand (cmd) {
-    emitter.emit('cmd', cmd)
+  function sendCommand (type, args = []) {
+    emitter.emit('cmd', { type, args })
   }
 
   function sendEvent (type, payload) {
@@ -73,7 +65,7 @@ function createClient ({
   }
 
   const chat = createChat({
-    onCmd: (cmd, ...args) => monsterr.handleCommand(cmd),
+    onCmd: cmd => monsterr.handleCommand(cmd),
     onMsg: msg => sendEvent('_msg', msg),
     hidden: options.hideChat || false
   })
@@ -95,8 +87,11 @@ function createClient ({
   /** API */
   const monsterr = {
     send: sendEvent,
-    sendCommand: (cmd, ...args) => sendCommand({ type: cmd, args: args || [] }),
+    sendCommand,
     log,
+
+    setId (id) { clientId = id },
+    getId: () => clientId,
 
     getChat: () => chat,
     getHtmlContainer: () => htmlContainer,
@@ -117,7 +112,7 @@ function createClient ({
       ], monsterr)
 
       if (shouldCallServer) {
-        sendCommand(cmd)
+        sendCommand(cmd.type, cmd.args)
       }
     },
 
@@ -125,7 +120,11 @@ function createClient ({
     getEvents () { return events },
     getStages () { return stages },
 
-    renderHtml: html => htmlContainer.render(html)
+    renderHtml: html => htmlContainer.render(html),
+    disconnect () {
+      htmlContainer.setHeightRatio(1)
+      htmlContainer.render('<h1>Disconnected...</h1>')
+    }
   }
 
   return { monsterr, emitter }
