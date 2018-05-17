@@ -9,7 +9,6 @@ export default function ({
 } = {}) {
   const logPath = path.join(process.cwd(), '/logs')
 
-  // check that it exists and create it if it don't
   try {
     fs.statSync(logPath)
   } catch (err) {
@@ -51,7 +50,8 @@ export default function ({
 
   return {
     log: function (msg, logfileOrExtra, extra) {
-      if (typeof logfileOrExtra === 'string') { // we want to log to different logFile
+      if (typeof logfileOrExtra === 'string') {
+        // we want to log to different logFile
         logToOther(logfileOrExtra, msg, extra)
       } else {
         defaultLogger.log(level, msg, logfileOrExtra)

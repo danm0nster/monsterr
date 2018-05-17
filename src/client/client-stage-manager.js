@@ -1,22 +1,23 @@
 import runStage from '../run-stage'
 
+/**
+ * Enhances stage running with:
+ * - html rendering
+ * - canvas clearing
+ */
 function runOnClient ({
   stage: {
     html,
-    clientSide: {
-      setup,
-      teardown
-    } = {},
+    setup,
+    teardown,
     options: {
       duration,
-      timeOnServer,
       htmlContainerHeight
     } = {}
   } = {},
   context = {},
   timeout
 }) {
-  // adjust html container
   let preHtmlContainerHeight
   let modifiedSetup = () => {
     preHtmlContainerHeight = context.getHtmlContainer().getHeightRatio()
@@ -37,12 +38,18 @@ function runOnClient ({
 
   return runStage({
     context,
-    duration: !timeOnServer ? duration : undefined,
+    timeout,
     setup: modifiedSetup,
-    teardown: modifiedTeardown
+    teardown: modifiedTeardown,
+    options: {
+      duration
+    }
   })
 }
 
+/**
+ * Manages stages on the client.
+ */
 function createManager ({
   stages = [],
   onStageFinished,
@@ -61,15 +68,13 @@ function createManager ({
 
     currentStage = stageNo
     let stage = stages[currentStage]
-    let clientSide = stage.clientSide || {}
-    events = clientSide.events || {}
-    commands = clientSide.commands || {}
+    events = stage.events || {}
+    commands = stage.commands || {}
 
     stopStage = runOnClient({
       stage,
       context: getContext(),
       timeout: () => {
-        console.log('timed out')
         onStageFinished(currentStage)
       }
     })

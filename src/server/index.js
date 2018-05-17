@@ -1,5 +1,6 @@
+import createHttpServer from './http-server'
+import createSocketServer from './socket-server'
 import createManager from './server-stage-manager'
-import { createHttpServer, createSocketServer } from './express-server'
 
 import Logger from './logger'
 import * as Network from './network'
@@ -20,18 +21,13 @@ const builtinAdminCommands = {
     monsterr.getStageManager().reset()
   },
   players (monsterr) {
-    monsterr
-      .send(
-        '_msg',
-        monsterr
-          .getNetwork()
-          .getPlayers()
-          .join(', ')
-      )
-      .toAdmin()
+    monsterr.send(
+      '_msg',
+      monsterr.getNetwork().getPlayers().join(', ')
+    ).toAdmin()
   },
   latencies (monsterr) {
-    monsterr.send('_msg', JSON.stringify(monsterr.getLatencies()))
+    monsterr.send('_msg', JSON.stringify(monsterr.getLatencies())).toAdmin()
   }
 }
 
@@ -56,8 +52,9 @@ export default function createServer ({
   adminCommands = {},
   stages = []
 } = {}) {
+  const httpServer = createHttpServer({ port: options.port })
+  const socketServer = createSocketServer(httpServer.getIO())
   let stageManager
-  const socketServer = createSocketServer()
 
   options = Object.assign(defaultOptions, options)
 
@@ -90,7 +87,6 @@ export default function createServer ({
   }
 
   function run () {
-    createHttpServer({ port: options.port })
     stageManager = createManager({
       getContext: () => monsterr,
       getPlayers: () => network.getPlayers(),

@@ -8,20 +8,6 @@ export function repeat (stage = {}, n = 2) {
 }
 
 /**
- * Exact copy of stage, but with timeOnServer set to true.
- * @param {{}} stage
- */
-export function timeOnServer (stage = {}) {
-  return {
-    ...stage,
-    options: {
-      ...stage.options,
-      timeOnServer: true
-    }
-  }
-}
-
-/**
  * Exact copy of stage, but with duration set.
  * @param {{}} stage
  * @param {number} duration

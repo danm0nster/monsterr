@@ -3,7 +3,9 @@ export default function runStage ({
   teardown,
   timeout,
   context = {},
-  duration
+  options: {
+    duration
+  } = {}
 }) {
   let timer
   let terminated = false

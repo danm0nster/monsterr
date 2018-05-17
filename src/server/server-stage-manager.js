@@ -2,32 +2,11 @@ import { uniq, difference, flattenDeep } from 'lodash'
 
 import runStage from '../run-stage'
 
-function runOnServer ({
-  stage: {
-    serverSide: {
-      setup,
-      teardown
-    } = {},
-    options: {
-      duration,
-      timeOnServer
-    } = {}
-  } = {},
-  context = {},
-  timeout
-}) {
-  return runStage({
-    context,
-    duration: timeOnServer ? duration : duration * 2,
-    timeout,
-    setup,
-    teardown
-  })
-}
-
 /**
- * Manages the stages on server.
- * @param {*} stages
+ * Manages stages on server.
+ *
+ * TODO: This is overloaded/complex and ripe for refactoring.
+ * Given the event nature, this could be an EventEmitter.
  */
 function createManager ({
   getContext = () => ({}),
@@ -47,7 +26,6 @@ function createManager ({
 
   stages = flattenDeep(stages)
 
-  // We are done when all players are finished
   function checkIfDone () {
     let players = getPlayers().filter(p => p !== undefined).sort()
 
@@ -57,7 +35,6 @@ function createManager ({
     }
   }
 
-  // Mark player as finished with current stage
   function playerFinishedStage (player, stageNo) {
     if (stageNo !== currentStage) {
       return
@@ -85,6 +62,7 @@ function createManager ({
       onStageEnded(currentStage)
     }
   }
+
   function nextStage () {
     if (!started ||
       currentStage >= stages.length) {
@@ -99,13 +77,12 @@ function createManager ({
     }
 
     let stage = stages[currentStage]
-    let serverSide = stage.serverSide || {}
-    events = serverSide.events || {}
-    commands = serverSide.commands || {}
+    events = stage.events || {}
+    commands = stage.commands || {}
 
-    stopStage = runOnServer({
+    stopStage = runStage({
+      ...stage,
       context: getContext(),
-      stage,
       timeout: nextStage
     })
 
