@@ -117,9 +117,24 @@ export default function createServer ({
     stageManager.getEvents()
   ], monsterr))
 
+  const resumeCurrentStage = (player) => {
+    const currentStage = stageManager.getCurrentStage()
+    if (options.resumeCurrentStage && currentStage !== -1) {
+      setTimeout(
+        () => monsterr.send('_start_stage', currentStage).toClient(player),
+        200
+      )
+    }
+  }
+
+  socketServer.on('reconnect', player => {
+    console.log(player, 'reconnected!')
+    resumeCurrentStage(player)
+  })
   socketServer.on('connect', player => {
     console.log(player, 'connected!')
     network.addPlayer(player)
+    resumeCurrentStage(player)
   })
   socketServer.on('disconnect', player => {
     console.log(player, 'disconnected!')

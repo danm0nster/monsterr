@@ -59,7 +59,6 @@ class SocketServer extends EventEmitter {
         socket.handshake.session.uuid = uuid = shortid()
         socket.handshake.session.save()
       }
-      const withClientId = cmdOrEvent => ({ ...cmdOrEvent, clientId: uuid })
 
       // new connection?
       if (!this.socketMap[uuid]) {
@@ -77,6 +76,7 @@ class SocketServer extends EventEmitter {
       })
 
       // Inbound
+      const withClientId = cmdOrEvent => ({ ...cmdOrEvent, clientId: uuid })
       socket.on('cmd', cmd => this.emit('cmd', withClientId(cmd)))
       socket.on('event', event => this.emit('event', withClientId(event)))
 
