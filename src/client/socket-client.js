@@ -12,7 +12,6 @@ class SocketClient extends EventEmitter {
   setupHandlers () {
     this.socket.on('_id', uuid => this.emit('id', uuid))
     this.socket.on('_heartbeat', ({ latest, avg }) => {
-      console.log('heartbeat received', 'latest:', latest, 'avg:', avg)
       this.socket.emit('_heartbeat_ack')
     })
     this.socket.on('event', event => this.emit('event', event))

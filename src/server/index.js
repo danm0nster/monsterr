@@ -32,8 +32,11 @@ const builtinAdminCommands = {
 }
 
 const builtinEvents = {
+  _set_name (monsterr, clientId, name) {
+    monsterr.setName(clientId, name)
+  },
   _msg (monsterr, clientId, msg) {
-    monsterr.send('_msg', msg).toNeighboursOf(clientId)
+    monsterr.send('_msg', { msg, name: monsterr.getName(clientId) }).toNeighboursOf(clientId)
   },
   _log (monsterr, _, json) {
     monsterr.log(json.msg, json.fileOrExtra, json.extra)
@@ -54,6 +57,7 @@ export default function createServer ({
 } = {}) {
   const httpServer = createHttpServer({ port: options.port })
   const socketServer = createSocketServer(httpServer.getIO())
+  const nameMap = {}
   let stageManager
 
   options = Object.assign(defaultOptions, options)
@@ -153,7 +157,15 @@ export default function createServer ({
     getStageManager: () => stageManager,
     getCommands: () => commands,
     getEvents: () => events,
-    getLatencies: () => socketServer.getLatencies()
+    getLatencies: () => socketServer.getLatencies(),
+
+    setName: (id, name) => {
+      const prevName = monsterr.getName(id)
+      nameMap[id] = name
+      monsterr.send('_set_name', { id, name, prevName }).toClient(id)
+      monsterr.send('_rename', { id, name, prevName }).toNeighboursOf(id)
+    },
+    getName: id => nameMap[id] || id
   }
 
   return monsterr

@@ -10,8 +10,8 @@ import isAdmin from './is-admin'
 import { handleEvent, handleCommand } from '../util'
 
 const builtinEvents = {
-  _msg (monsterr, msg) {
-    monsterr.getChat().append(msg)
+  _msg (monsterr, { msg, name }) {
+    monsterr.getChat().append(msg, name)
   }
 }
 
@@ -21,6 +21,12 @@ const builtinClientOnlyEvents = {
   },
   _end_stage (monsterr, stageNo) {
     monsterr.getStageManager().endStage(stageNo)
+  },
+  _set_name (monsterr, { name, prevName }) {
+    monsterr.getChat().rename(prevName, name)
+  },
+  _rename (monsterr, { name, prevName }) {
+    monsterr.getChat().rename(prevName, name)
   }
 }
 
@@ -31,6 +37,9 @@ const builtinCommands = {
   },
   id (monsterr) {
     monsterr.getChat().append(monsterr.getId())
+  },
+  name (monsterr, name) {
+    monsterr.send('_set_name', name)
   }
 }
 

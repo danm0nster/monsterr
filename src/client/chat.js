@@ -1,10 +1,14 @@
 /* globals $ */
 
-function append (msg) {
-  $('#messages').append($('<li>').text(msg))
+function append (msg, name) {
+  $('#messages').append($('<li>').text(name + ': ' + msg))
 
   let height = $('#messages')[0].scrollHeight
   $('#messages').animate({ scrollTop: height })
+}
+
+function rename (name, newName) {
+  $('#messages > li').text((_, text) => text.replace(name, newName))
 }
 
 function clear () {
@@ -79,7 +83,8 @@ function createChat ({
     hide,
     show,
     append,
-    clear
+    clear,
+    rename
   }
 }
 
