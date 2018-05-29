@@ -21,16 +21,30 @@ io.of('/clients').use(sharedSession(session))
 app.use(express.static('dist'))
 app.use('/assets', express.static('assets'))
 
-/* Routes */
-app.get('/', (req, res) => res.sendFile(path.join(__dirname, '../../index.html')))
-app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, '../../index.html')))
-// app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, '../admin.html')))
-app.get('/fabric', (req, res) => res.sendFile(path.join(__dirname, '../../imports', 'fabric-2.2.3.js')))
+const hasPasswordMiddleware = password => (req, res, next) => {
+  if (!password) { return next() }
+
+  if (req.query.key === password) {
+    return next()
+  }
+
+  res.redirect('/')
+}
 
 // Options are passed through to createServer inside of module
 export default function createHttpServer ({
-  port = 3000
+  port = 3000,
+  clientPassword,
+  adminPassword
 }) {
+  const clientMiddleware = hasPasswordMiddleware(clientPassword)
+  const adminMiddleware = hasPasswordMiddleware(adminPassword)
+
+  /* Routes */
+  app.get('/admin', adminMiddleware, (req, res) => res.sendFile(path.join(__dirname, '../../index.html')))
+  app.get('/', clientMiddleware, (req, res) => res.sendFile(path.join(__dirname, '../../index.html')))
+  app.get('/fabric', (req, res) => res.sendFile(path.join(__dirname, '../../imports', 'fabric-2.2.3.js')))
+
   httpServer.listen(port, () => {
     console.log('listening on ' + port)
   })

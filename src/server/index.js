@@ -55,7 +55,11 @@ export default function createServer ({
   adminCommands = {},
   stages = []
 } = {}) {
-  const httpServer = createHttpServer({ port: options.port })
+  const httpServer = createHttpServer({
+    port: options.port,
+    clientPassword: options.clientPassword,
+    adminPassword: options.adminPassword
+  })
   const socketServer = createSocketServer(httpServer.getIO())
   const nameMap = {}
   let stageManager
