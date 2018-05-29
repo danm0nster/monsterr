@@ -5,69 +5,35 @@ import createManager from './server-stage-manager'
 import Logger from './logger'
 import * as Network from './network'
 import { handleEvent, handleCommand } from '../util'
-
-const defaultOptions = {
-  port: 3000
-}
-
-const builtinAdminCommands = {
-  start (monsterr) {
-    monsterr.start()
-  },
-  next (monsterr) {
-    monsterr.getStageManager().next()
-  },
-  reset (monsterr) {
-    monsterr.getStageManager().reset()
-  },
-  players (monsterr) {
-    monsterr.send(
-      '_msg',
-      monsterr.getNetwork().getPlayers().join(', ')
-    ).toAdmin()
-  },
-  latencies (monsterr) {
-    monsterr.send('_msg', JSON.stringify(monsterr.getLatencies())).toAdmin()
-  }
-}
-
-const builtinEvents = {
-  _set_name (monsterr, clientId, name) {
-    monsterr.setName(clientId, name)
-  },
-  _msg (monsterr, clientId, msg) {
-    monsterr.send('_msg', { msg, name: monsterr.getName(clientId) }).toNeighboursOf(clientId)
-  },
-  _log (monsterr, _, json) {
-    monsterr.log(json.msg, json.fileOrExtra, json.extra)
-  },
-  _stage_finished (monsterr, clientId, stageNo) {
-    monsterr.getStageManager().playerFinishedStage(clientId, stageNo)
-  }
-}
+import { builtinAdminCommands } from './commands'
+import { builtinEvents } from './events'
 
 export default function createServer ({
   network = Network.pairs(16),
   logger = Logger({}),
-  options = {},
   events = {},
   commands = {},
   adminCommands = {},
-  stages = []
+  stages = [],
+  options: {
+    port = 3000,
+    resumeCurrentStage = false,
+    clientPassword = '',
+    adminPassword = ''
+  } = {}
 } = {}) {
+  let stageManager
+  const nameMap = {}
+
   const httpServer = createHttpServer({
-    port: options.port,
-    clientPassword: options.clientPassword,
-    adminPassword: options.adminPassword
+    port,
+    clientPassword,
+    adminPassword
   })
   const socketServer = createSocketServer(httpServer.getIO())
-  const nameMap = {}
-  let stageManager
-
-  options = Object.assign(defaultOptions, options)
 
   function send (topic, message) {
-    let event = { type: topic, payload: message }
+    const event = { type: topic, payload: message }
     return {
       toAll () {
         socketServer.sendEvent(event).toAll()
@@ -125,9 +91,9 @@ export default function createServer ({
     stageManager.getEvents()
   ], monsterr))
 
-  const resumeCurrentStage = (player) => {
+  const resumeStageForPlayer = (player) => {
     const currentStage = stageManager.getCurrentStage()
-    if (options.resumeCurrentStage && currentStage !== -1) {
+    if (resumeCurrentStage && currentStage !== -1) {
       setTimeout(
         () => monsterr.send('_start_stage', currentStage).toClient(player),
         200
@@ -137,12 +103,12 @@ export default function createServer ({
 
   socketServer.on('reconnect', player => {
     console.log(player, 'reconnected!')
-    resumeCurrentStage(player)
+    resumeStageForPlayer(player)
   })
   socketServer.on('connect', player => {
     console.log(player, 'connected!')
     network.addPlayer(player)
-    resumeCurrentStage(player)
+    resumeStageForPlayer(player)
   })
   socketServer.on('disconnect', player => {
     console.log(player, 'disconnected!')

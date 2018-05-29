@@ -8,40 +8,8 @@ import createSocketClient from './socket-client'
 import isAdmin from './is-admin'
 
 import { handleEvent, handleCommand } from '../util'
-
-const builtinEvents = {
-  _msg (monsterr, { msg, name }) {
-    monsterr.getChat().append(msg, name)
-  }
-}
-
-const builtinClientOnlyEvents = {
-  _start_stage (monsterr, stageNo) {
-    monsterr.getStageManager().startStage(stageNo)
-  },
-  _end_stage (monsterr, stageNo) {
-    monsterr.getStageManager().endStage(stageNo)
-  },
-  _set_name (monsterr, { name, prevName }) {
-    monsterr.getChat().rename(prevName, name)
-  },
-  _rename (monsterr, { name, prevName }) {
-    monsterr.getChat().rename(prevName, name)
-  }
-}
-
-const builtinCommands = {
-  clear (monsterr, ...args) {
-    monsterr.getChat().clear()
-    return false // don't send this
-  },
-  id (monsterr) {
-    monsterr.getChat().append(monsterr.getId())
-  },
-  name (monsterr, name) {
-    monsterr.send('_set_name', name)
-  }
-}
+import { builtinEvents, builtinClientEvents } from './events'
+import { builtinCommands } from './commands'
 
 function createClient ({
   options = {},
@@ -97,7 +65,7 @@ function createClient ({
     handleEvent(event, [
       events,
       builtinEvents,
-      isAdmin ? {} : builtinClientOnlyEvents,
+      isAdmin ? {} : builtinClientEvents,
       isAdmin ? {} : stageManager.getEvents()
     ], monsterr)
   })

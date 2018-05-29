@@ -1,7 +1,14 @@
 /* globals $ */
 
 function append (msg, name) {
-  $('#messages').append($('<li>').text(name + ': ' + msg))
+  $('#messages')
+    .append(
+      $('<li>').text(
+        name
+          ? name + ': ' + msg
+          : msg
+      )
+    )
 
   let height = $('#messages')[0].scrollHeight
   $('#messages').animate({ scrollTop: height })
