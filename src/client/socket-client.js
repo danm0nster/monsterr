@@ -5,7 +5,9 @@ class SocketClient extends EventEmitter {
   constructor (namespace) {
     super()
 
-    this.socket = io(namespace)
+    this.socket = io(namespace, {
+      reconnection: false
+    })
     this.setupHandlers()
   }
 
