@@ -11,6 +11,8 @@ import { handleEvent, handleCommand } from '../util'
 import { builtinEvents, builtinClientEvents } from './events'
 import { builtinCommands } from './commands'
 
+import * as Events from '../events'
+
 function createClient ({
   options = {},
   events = {},
@@ -24,7 +26,7 @@ function createClient ({
 
   function log (msg, fileOrExtra, extra) {
     socketClient.sendEvent({
-      type: '_log',
+      type: Events.LOG,
       payload: { msg, fileOrExtra, extra }
     })
   }
@@ -41,7 +43,7 @@ function createClient ({
         socketClient.sendCommand(cmd)
       }
     },
-    onMsg: msg => monsterr.send('_msg', msg),
+    onMsg: msg => monsterr.send(Events.MESSAGE, msg),
     hidden: options.hideChat || false
   })
   const htmlContainer = createHtmlContainer(options)
@@ -55,12 +57,15 @@ function createClient ({
     stages,
     getContext: () => monsterr,
     onStageFinished: stageNo => {
-      monsterr.send('_stage_finished', stageNo)
+      monsterr.send(Events.STAGE_FINISHED, stageNo)
     }
   }) : undefined
 
-  socketClient.on('id', id => { clientId = id })
-  socketClient.on('disconnect', () => monsterr.disconnect())
+  socketClient.on(Events.SET_ID, id => {
+    clientId = id
+    chat.append('Your id is: ' + id)
+  })
+  socketClient.on(Events.CLIENT_DISCONNECTED, () => monsterr.disconnect())
   socketClient.on('event', event => {
     handleEvent(event, [
       events,

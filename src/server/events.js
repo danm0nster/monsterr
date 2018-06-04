@@ -2,22 +2,24 @@
  * Built in serverside events.
  */
 
+import * as Events from '../events'
+
 export const builtinEvents = {
-  _set_name (monsterr, clientId, name) {
+  [Events.SET_NAME] (monsterr, clientId, name) {
     monsterr.setName(clientId, name)
   },
 
-  _msg (monsterr, clientId, msg) {
+  [Events.MESSAGE] (monsterr, clientId, msg) {
     monsterr
-      .send('_msg', { msg, name: monsterr.getName(clientId) })
+      .send(Events.MESSAGE, { msg, name: monsterr.getName(clientId) })
       .toNeighboursOf(clientId)
   },
 
-  _log (monsterr, _, json) {
+  [Events.LOG] (monsterr, _, json) {
     monsterr.log(json.msg, json.fileOrExtra, json.extra)
   },
 
-  _stage_finished (monsterr, clientId, stageNo) {
+  [Events.STAGE_FINISHED] (monsterr, clientId, stageNo) {
     monsterr
       .getStageManager()
       .playerFinishedStage(clientId, stageNo)

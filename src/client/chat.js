@@ -1,21 +1,21 @@
 /* globals $ */
 
 function append (msg, name) {
+  const $nameDiv = $(`<div class="name-div">${name || 'System'}</div>`)
+  const $msgDiv = $(`<div class="msg-div">${msg}</div>`)
+
+  const $liItem = $('<li>')
+  $liItem.append($nameDiv, [$msgDiv])
+
   $('#messages')
-    .append(
-      $('<li>').text(
-        name
-          ? name + ': ' + msg
-          : msg
-      )
-    )
+    .append($liItem)
 
   let height = $('#messages')[0].scrollHeight
   $('#messages').animate({ scrollTop: height })
 }
 
 function rename (name, newName) {
-  $('#messages > li').text((_, text) => text.replace(name, newName))
+  $('.name-div').text((_, text) => text.replace(name, newName))
 }
 
 function clear () {

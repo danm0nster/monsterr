@@ -1,6 +1,8 @@
 import { EventEmitter } from 'events'
 import shortid from 'shortid'
 
+import * as Events from '../events'
+
 class SocketServer extends EventEmitter {
   constructor (io) {
     super()
@@ -26,7 +28,7 @@ class SocketServer extends EventEmitter {
       let latencies = this.latencies[uuid]
       let latest = latencies ? latencies.getLatest() : -1
       let avg = latencies ? latencies.getAvg() : -1
-      socket.emit('_heartbeat', { latest, avg })
+      socket.emit(Events.HEARTBEAT, { latest, avg })
     })
   }
 
@@ -62,16 +64,16 @@ class SocketServer extends EventEmitter {
 
       // new connection?
       if (!this.socketMap[uuid]) {
-        this.emit('connect', uuid)
+        this.emit(Events.CLIENT_CONNECTED, uuid)
       } else {
         this.socketMap[uuid].disconnect() // disconnect prev socket
-        this.emit('reconnect', uuid)
+        this.emit(Events.CLIENT_RECONNECTED, uuid)
       }
       this.socketMap[uuid] = socket
 
       // internal events
-      socket.emit('_id', uuid)
-      socket.on('_heartbeat_ack', _ => {
+      socket.emit(Events.SET_ID, uuid)
+      socket.on(Events.HEARTBEAT_ACK, _ => {
         this.handleHeartbeatAck(uuid)
       })
 
@@ -86,7 +88,7 @@ class SocketServer extends EventEmitter {
           // if still dc'ed, disconnect
           if (this.socketMap[uuid].id === socket.id) {
             delete this.socketMap[uuid]
-            this.emit('disconnect', uuid)
+            this.emit(Events.CLIENT_DISCONNECTED, uuid)
           }
         }, 10000)
       })

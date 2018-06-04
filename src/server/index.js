@@ -8,6 +8,8 @@ import { handleEvent, handleCommand } from '../util'
 import { builtinAdminCommands } from './commands'
 import { builtinEvents } from './events'
 
+import * as Events from '../events'
+
 export default function createServer ({
   network = Network.pairs(16),
   logger = Logger({}),
@@ -64,9 +66,18 @@ export default function createServer ({
     stageManager = createManager({
       getContext: () => monsterr,
       getPlayers: () => network.getPlayers(),
-      onStageStarted: stageNo => monsterr.send('_start_stage', stageNo).toAll(),
-      onStageEnded: stageNo => monsterr.send('_end_stage', stageNo).toAll(),
-      onGameOver: () => monsterr.send('_game_over').toAll(),
+      onStageStarted: stageNo => {
+        internalHandleEvent({ type: Events.START_STAGE, payload: stageNo })
+        monsterr.send(Events.START_STAGE, stageNo).toAll()
+      },
+      onStageEnded: stageNo => {
+        internalHandleEvent({ type: Events.END_STAGE, payload: stageNo })
+        monsterr.send(Events.END_STAGE, stageNo).toAll()
+      },
+      onGameOver: () => {
+        internalHandleEvent({ type: Events.GAME_OVER })
+        monsterr.send(Events.GAME_OVER).toAll()
+      },
       stages
     })
   }
@@ -79,40 +90,47 @@ export default function createServer ({
     logger.log(msg, fileOrExtra, extra)
   }
 
+  function internalHandleEvent (event) {
+    handleEvent(event, [
+      events,
+      builtinEvents,
+      stageManager.getEvents()
+    ], monsterr)
+  }
+
   socketServer.on('cmd', cmd => handleCommand(cmd, [
     commands,
     stageManager.getCommands(),
     !cmd.clientId ? builtinAdminCommands : {},
     !cmd.clientId ? adminCommands : {}
   ], monsterr))
-  socketServer.on('event', event => handleEvent(event, [
-    events,
-    builtinEvents,
-    stageManager.getEvents()
-  ], monsterr))
+  socketServer.on('event', internalHandleEvent)
 
   const resumeStageForPlayer = (player) => {
     const currentStage = stageManager.getCurrentStage()
     if (resumeCurrentStage && currentStage !== -1) {
       setTimeout(
-        () => monsterr.send('_start_stage', currentStage).toClient(player),
+        () => monsterr.send(Events.START_STAGE, currentStage).toClient(player),
         200
       )
     }
   }
 
-  socketServer.on('reconnect', player => {
+  socketServer.on(Events.CLIENT_RECONNECTED, player => {
     console.log(player, 'reconnected!')
+    internalHandleEvent({ type: Events.CLIENT_RECONNECTED, clientId: player })
     resumeStageForPlayer(player)
   })
-  socketServer.on('connect', player => {
+  socketServer.on(Events.CLIENT_CONNECTED, player => {
     console.log(player, 'connected!')
     network.addPlayer(player)
+    internalHandleEvent({ type: Events.CLIENT_CONNECTED, clientId: player })
     resumeStageForPlayer(player)
   })
-  socketServer.on('disconnect', player => {
+  socketServer.on(Events.CLIENT_DISCONNECTED, player => {
     console.log(player, 'disconnected!')
     network.removePlayer(player)
+    internalHandleEvent({ type: Events.CLIENT_DISCONNECTED, clientId: player })
     stageManager.playerDisconnected(player)
   })
 
@@ -132,8 +150,8 @@ export default function createServer ({
     setName: (id, name) => {
       const prevName = monsterr.getName(id)
       nameMap[id] = name
-      monsterr.send('_set_name', { id, name, prevName }).toClient(id)
-      monsterr.send('_rename', { id, name, prevName }).toNeighboursOf(id)
+      monsterr.send(Events.SET_NAME, { id, name, prevName }).toClient(id)
+      monsterr.send(Events.RENAME, { id, name, prevName }).toNeighboursOf(id)
     },
     getName: id => nameMap[id] || id
   }

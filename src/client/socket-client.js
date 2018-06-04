@@ -1,6 +1,8 @@
 import { EventEmitter } from 'events'
 import io from 'socket.io-client'
 
+import * as Events from '../events'
+
 class SocketClient extends EventEmitter {
   constructor (namespace) {
     super()
@@ -12,14 +14,14 @@ class SocketClient extends EventEmitter {
   }
 
   setupHandlers () {
-    this.socket.on('_id', uuid => this.emit('id', uuid))
-    this.socket.on('_heartbeat', ({ latest, avg }) => {
-      this.socket.emit('_heartbeat_ack')
+    this.socket.on(Events.SET_ID, uuid => this.emit(Events.SET_ID, uuid))
+    this.socket.on(Events.HEARTBEAT, ({ latest, avg }) => {
+      this.socket.emit(Events.HEARTBEAT_ACK)
     })
     this.socket.on('event', event => this.emit('event', event))
     this.socket.on('disconnect', () => {
       this.socket.off()
-      this.emit('disconnect')
+      this.emit(Events.CLIENT_DISCONNECTED)
     })
   }
 

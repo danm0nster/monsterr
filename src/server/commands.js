@@ -2,6 +2,8 @@
  * Builtin serverside commands.
  */
 
+import * as Events from '../events'
+
 export const builtinAdminCommands = {
   start (monsterr) {
     monsterr.start()
@@ -18,14 +20,14 @@ export const builtinAdminCommands = {
   players (monsterr) {
     const players = monsterr.getNetwork().getPlayers().join(', ')
     monsterr
-      .send('_msg', players)
+      .send(Events.MESSAGE, players)
       .toAdmin()
   },
 
   latencies (monsterr) {
     const latencies = JSON.stringify(monsterr.getLatencies())
     monsterr
-      .send('_msg', latencies)
+      .send(Events.MESSAGE, latencies)
       .toAdmin()
   }
 }

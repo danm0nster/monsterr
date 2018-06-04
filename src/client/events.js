@@ -2,8 +2,10 @@
  * Builtin clientside events.
  */
 
+import * as Events from '../events'
+
 export const builtinEvents = {
-  _msg (monsterr, payload) {
+  [Events.MESSAGE] (monsterr, payload) {
     if (typeof payload === 'string') {
       monsterr.getChat().append(payload)
     } else {
@@ -14,16 +16,16 @@ export const builtinEvents = {
 }
 
 export const builtinClientEvents = {
-  _start_stage (monsterr, stageNo) {
+  [Events.START_STAGE] (monsterr, stageNo) {
     monsterr.getStageManager().startStage(stageNo)
   },
-  _end_stage (monsterr, stageNo) {
+  [Events.END_STAGE] (monsterr, stageNo) {
     monsterr.getStageManager().endStage(stageNo)
   },
-  _set_name (monsterr, { name, prevName }) {
+  [Events.SET_NAME] (monsterr, { name, prevName }) {
     monsterr.getChat().rename(prevName, name)
   },
-  _rename (monsterr, { name, prevName }) {
+  [Events.RENAME] (monsterr, { name, prevName }) {
     monsterr.getChat().rename(prevName, name)
   }
 }
