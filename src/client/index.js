@@ -1,5 +1,3 @@
-import { flattenDeep } from 'lodash'
-
 import createChat from './chat.js'
 import createCanvas from './canvas.js'
 import createHtmlContainer from './html-container'
@@ -21,8 +19,6 @@ function createClient ({
 } = {}) {
   let clientId
   const socketClient = createSocketClient(isAdmin ? '/admin' : '/clients')
-
-  stages = flattenDeep(stages)
 
   function log (msg, fileOrExtra, extra) {
     socketClient.sendEvent({
@@ -87,10 +83,6 @@ function createClient ({
     getHtmlContainer: () => htmlContainer,
     getCanvas: () => canvas,
     getStageManager: () => stageManager,
-
-    getCommands () { return commands },
-    getEvents () { return events },
-    getStages () { return stages },
 
     renderHtml: html => htmlContainer.render(html),
     disconnect () {

@@ -20,7 +20,7 @@ You define your event handlers (or simply events) and pass them to `createServer
 On the client side each event handler is simply passed the `monsterrClient` instance and the data of the event.
 ```js
 let events = {
-  'myEvent': (monsterrClient, data) => {
+  myEvent (monsterrClient, data) {
     ...
   }
 }
@@ -35,7 +35,7 @@ Server-side events are also passed a *clientId*, but are otherwise handled exact
 
 ```js
 let events = {
-  'myEvent': (monsterrServer, clientId, data) => {
+  myEvent (monsterrServer, clientId, data) {
     ...
   }
 }
@@ -67,3 +67,35 @@ monsterr.send('event', data).toNeigboursOf(clientId) // includes client 'clientI
 monsterr.send('event', data).toNeigboursOfExclusive(clientId)
 monsterr.send('event', data).toAdmin() // Send only to the special admin client
 ```
+
+## Builtin Events
+Internally `monsterr` uses events as well. These are prefixed to prevent clashes with your events. Sometimes you might want to provide your own eventhandlers for some internal events.
+
+The internal events are exposed through `Events` available on client and server.
+
+```js
+import { Events } from 'monsterr'
+
+/* Available events are:
+Events.CLIENT_CONNECTED     (server)
+Events.CLIENT_RECONNECTED   (server)
+Events.CLIENT_DISCONNECTED  (server)
+
+Events.START_STAGE          (client and server)
+Events.END_STAGE            (client and server)
+Events.STAGE_FINISHED       (client and server)
+Events.GAME_OVER            (client and server)
+
+Events.LOG                  (server)
+Events.MESSAGE              (server)
+*/
+
+// Example use:
+let events = {
+  [Events.CLIENT_CONNECTED] (monsterrServer, clientId) {
+    // do something when client connects
+  }
+}
+```
+
+It's important to note that you will **not** overwrite internal events. Your handlers will be run in addition to the internal logic.

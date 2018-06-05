@@ -23,5 +23,32 @@ export const builtinEvents = {
     monsterr
       .getStageManager()
       .playerFinishedStage(clientId, stageNo)
+  },
+
+  [Events.CLIENT_CONNECTED] (monsterr, clientId) {
+    console.log(clientId, 'connected!')
+    monsterr.addPlayer(clientId)
+  },
+
+  [Events.CLIENT_RECONNECTED] (monsterr, clientId) {
+    console.log(clientId, 'reconnected!')
+    monsterr.addPlayer(clientId)
+  },
+
+  [Events.CLIENT_DISCONNECTED] (monsterr, clientId) {
+    console.log(clientId, 'disconnected!')
+    monsterr.removePlayer(clientId)
+  },
+
+  [Events.START_STAGE] (monsterr, _, stageNo) {
+    monsterr.send(Events.START_STAGE, stageNo).toAll()
+  },
+
+  [Events.END_STAGE] (monsterr, _, stageNo) {
+    monsterr.send(Events.END_STAGE, stageNo).toAll()
+  },
+
+  [Events.GAME_OVER] (monsterr) {
+    monsterr.send(Events.GAME_OVER).toAll()
   }
 }

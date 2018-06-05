@@ -5,8 +5,6 @@
 
 ### Client (client.js)
 On the client you configure options, define event and command handlers.
-
-> Current:
 ```js
 // client.js
 import createClient from 'monsterr'
@@ -36,7 +34,6 @@ const monsterrClient = createClient({
 
 ### Server (server.js)
 Server-side behaves similar to client.
-> Current:
 ```js
 //server.js
 import createServer from 'monsterr'
@@ -66,22 +63,21 @@ const monsterrServer = createServer({
 monsterrServer.run()
 ```
 
-## What's the difference???
+## What's the difference?
 `monsterr` behaves different whether we are server-side or client-side.
 By some black magic the exports available from `monsterr` differ from server to client, but both expose functionality that is common to client and server.
 
-### Server Only
+### Server
 ```
 createServer (default)
 Network
+Stages
+Events
 ```
 
-### Client Only
+### Client
 ```
 createClient (default)
-```
-
-### Both
-```
 Stages
+Events
 ```

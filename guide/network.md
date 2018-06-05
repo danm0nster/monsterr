@@ -1,9 +1,7 @@
 # Network
 > Notice: Network is only exposed server-side. It should only be used to set up the server.
 
-Every `monsterr` game uses a network to define how clients are connected to eachother. Each node in the network represents a client.
-
-> **Current**:
+Every `monsterr` game uses a network to define how clients are connected to each other. Each node in the network represents a client.
 
 You can access the default configured network through `monsterr.network`. From the network you can retrieve players or get neighbours of a certain player.
 
@@ -60,7 +58,7 @@ let myNetwork = Network.fromAdjecencyList([
 ])
 ```
 
-> **Proposal**:
+## Proposal (THIS IS NOT IMPLEMENTED)
 
 The current implementation only allows for a set number of clients. I propose supporting a variable number of clients. The way I would approach that is using a `grow` function that specifies how a network grows.
 

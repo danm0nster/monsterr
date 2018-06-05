@@ -13,7 +13,7 @@ If there is no *handler* on the client OR the *handler* didn't return **false**,
 ```js
 // client side
 let commands = {
-  'myCmd': function (monsterr, ...args) {
+  myCmd (monsterr, ...args) {
     ...
     // return false  <-- would stop the command from being sent to server as well
   }
@@ -21,7 +21,7 @@ let commands = {
 
 // server side
 let commands = {
-  'myCmd': function (monsterr, clientId, ...args) {
+  myCmd (monsterr, clientId, ...args) {
     ...
   }
 }
@@ -37,9 +37,10 @@ You could do it client side and write the result to the chat:
 ```js
 // client.js
 let commands = {
-  'add': function(monsterr, ...args) {
+  add (monsterr, ...args) {
     let result = args.reduce((sum, arg) => sum + Number(arg), 0)
-    monsterr.chat.prepend(result) // Display in chat
+    // Display in chat
+    monsterr.chat.append(result, 'Calculator')
     return false // Don't send command on to server
   }
 }
@@ -49,9 +50,9 @@ Or you could do it server side and log the result:
 ```js
 // server.js
 let commands = {
-  'add': function(monsterr, clientId, ...args) {
+  add (monsterr, clientId, ...args) {
     let result = args.reduce((sum, arg) => sum + Number(arg), 0)
-    monsterr.log('added', {args: args, result: result})
+    monsterr.log('added', { args, result })
   }
 }
 ```

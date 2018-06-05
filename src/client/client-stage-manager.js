@@ -1,3 +1,5 @@
+import { flattenDeep } from 'lodash'
+
 import runStage from '../run-stage'
 
 /**
@@ -55,6 +57,8 @@ function createManager ({
   onStageFinished,
   getContext
 }) {
+  stages = flattenDeep(stages)
+
   let events = {}
   let commands = {}
 

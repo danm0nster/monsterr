@@ -1,59 +1,59 @@
 # Stages
+> `create-monsterr-game` includes a sample stage. It might be easier to follow the sample than the documentation alone.
 
 A stage is a relatively isolatable part of a game and a game consists of a sequence of stages.
 
-## Defining stages
+## Structure
+Stages are usually structured like this:
+```
+|____ src
+| |____stages
+| | |____stage1
+| | | |____client.js
+| | | |____server.js
+| | | |____stage1.html
+| | | |____stage1.css
+| | |____stage2
+| | |____stage3
+```
 
-A stage has the following basic structure:
+
+## Defining stages
+A stage has a client component and a server component both of which has the following basic structure:
 ```js
 let stage = {
-  serverSide: {
+  events: {
     ...
   },
-  clientSide: {
+  commands: {
     ...
   },
   options: {
-    ...
-  }
+    ... // options vary from server to client
+  },
+  setup () {},
+  teardown () {},
+  html // CLIENT ONLY
 }
 ```
 
 ### Options
 The following options are available:
 
-- duration: Duration in ms. If specified the stage will automatically end after *duration*. This by default happens on the clients and the server makes the final call to move on to the next stage, when all connected clients have finished. If no duration is specified the stage will go on until all clients have finished or the server ends the stage early (You can do this with `monsterrServer.getStageManager().next()` if you need to).
-- timeOnServer: By default a stage is timed on clients. You can use `timeOnServer: true` to change that. Then only the server will run a timer and will move on when that is done (no matter if clients report finished or not).
+- duration: Duration in ms. If specified the stage will automatically end after *duration*. This can be done both on the server (force end after duration) or on the client (wait for all clients to finish before ending).
 
-### ServerSide
-Serverside you optionally provide any or all of the following:
+### Events / Commands
+Events and commands work like regular events and commands except they are 'scoped' to the stage. They will only execute during the stage.
+
+### Setup / Teardown
+You can provide a setup and/or teardown handler both on the server and on the client. These will run when the stage starts/ends. They receive the `monsterrServer` or `monsterrClient` instance as their only argument.
+
 ```js
-serverSide: {
-  events: { ... },
-  commands: { ... },
-  setup: (monsterrServer) => {
+{
+  setup (monsterrServer /* or client */) {
     ...
   },
-  teardown: (monsterrServer) => {
-    ...
-  }
-}
-```
-
-*events* and *commands* work just like regularly with the exception that they are only valid (that is, executed) for the duration of the stage to which they belong.
-*setup* is called when the stage begins.
-*teardown* is called when the stage ends.
-
-### ClientSide
-Clientside is exactly like serverside except you get an instance of `monsterrClient` instead of `monsterrServer`:
-```js
-clientSide: {
-  events: { ... },
-  commands: { ... },
-  setup: (monsterrClient) => {
-    ...
-  },
-  teardown: (monsterrClient) => {
+  teardown (monsterrServer /* or client */) {
     ...
   }
 }
@@ -61,72 +61,57 @@ clientSide: {
 
 
 ## Sequence
-To use your stages you need to build the sequence of stages that is to be your game.
-The recommended way of structuring your stages is (but you can of course structure them any way you like):
-```
-.
-|____client.js
-|____server.js
-|____src
-| |____stages
-| | |____index.js     // Sequence your stages here
-| | |____stage1
-| | | |____index.js   // Combine client/server for stage1 here
-| | | |____client.js
-| | | |____server.js
-| | |____stage2
-| | | |____index.js   // Combine client/server for stage2 here
-| | | |____client.js
-| | | |____server.js
-```
+To use your stages you need to build the sequence of stages that is to be your game. You have to do this for the server and for the client.
 
-The *stages/index.js* might then look like this:
+The *server.js* might have this:
 ```js
-import stage1 from './stage1'
-import stage2 from './stage2'
+import stage1 from './stage1/server'
+import stage2 from './stage2/server'
 
-export default [
+const stages = [
   stage1,
   stage2
 ]
+
+createServer({
+  stages,
+  ...
+})
 ```
 
-To actually include stages in your game you have to pass them to **both** `createClient` and `createServer`.
-
+And the *client.js* should then have this:
 ```js
-// server.js
-import stages from './src/stages'
-...
-createServer({
-  ...,
-  stages
-})
+import stage1 from './stage1/client'
+import stage2 from './stage2/client'
 
-// client.js
-import stages from './src/stages'
-...
+/* Notice, same sequence as server */
+const stages = [
+  stage1,
+  stage2
+]
+
 createClient({
-  ...,
-  stages
+  stages,
+  ...
 })
 ```
 
 ## Sequence helpers
 `monsterr` includes a few helpers for use when defining your sequence of stages.
 
-They are `repeat` (repeats a stage), `withDuration` (sets the duration option) and `timeOnServer` (sets the timeOnServer option).
+They are `repeat` (repeats a stage), `withDuration` (sets the duration option).
 
-Let's revisit *stages/index*, this time with some helpers:
+They can be used as follow:
 ```js
+// server.js
 import { Stages } from 'monsterr'
 
-import stage1 from './stage1'
-import stage2 from './stage2'
+import stage1 from './stage1/server'
+import stage2 from './stage2/server'
 
-export default [
-  Stages.repeat(stage1, 10),
-  Stages.withDuration(stage2, 10000),
-  Stages.timeOnServer(stage1)
+const stages = [
+  Stages.repeat(stage1, 10), // repeat a stage
+  Stages.withDuration(stage2, 10000), // use stage but with different duration
 ]
 ```
 
@@ -137,27 +122,26 @@ It is possible to add HTML to your stages. This can be useful if you have to pre
 You can create html files within your existing stage structure: ex.
 
 ```html
-<!-- .../stage1/some.html -->
+<!-- .../stage1/stage1.html -->
 <div id="myDiv">
   <h1>Hi!</h1>
 </div>
 ```
-And import them when combining the stage.
+And include it in your *client.js* for the stage.
 
 ```js
-// .../stage1/index.js
-import html from './some.html'
-...
+// .../stage1/client.js
+import html from './stage1.html'
+
 export default {
-  serverSide,
-  clientSide,
-  html,           // <== make sure to include them
+  html, // <== make sure to include html here
   options: {
     // You can set the height of the html content
     // for this stage only. After the stage the height
     // will revert to default. See below.
     htmlContainerHeight: 0.5
-  }
+  },
+  ...
 }
 ```
 

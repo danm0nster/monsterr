@@ -1,5 +1,5 @@
 import * as Stages from './stage-helpers'
-import * as Events from './events'
+import Events from './events'
 
 export {
   Stages,
