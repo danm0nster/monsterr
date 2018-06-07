@@ -21,7 +21,6 @@ export const builtinEvents = {
 
   [Events.STAGE_FINISHED] (monsterr, clientId, stageNo) {
     monsterr
-      .getStageManager()
       .playerFinishedStage(clientId, stageNo)
   },
 

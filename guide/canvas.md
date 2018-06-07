@@ -12,3 +12,23 @@ options = {
   canvasBackgroundColor: '#999' // the canvas is per default grey
 }
 ```
+
+
+## Example
+> The following is an extremely simple example. We refer to the *fabric* documentation for further use.
+
+```js
+// On client (prob. inside stage > setup())
+
+client
+  .getCanvas()
+  .add(
+    new fabric.Triangle({
+      width: 50,
+      height: 50,
+      fill: 'red',
+      left: 200,
+      top: 500
+    })
+  )
+```

@@ -3,21 +3,13 @@
 
 Every `monsterr` game uses a network to define how clients are connected to each other. Each node in the network represents a client.
 
-You can access the default configured network through `monsterr.network`. From the network you can retrieve players or get neighbours of a certain player.
-
-```js
-let network = monsterr.getNetwork()
-let allPlayers = network.getPlayers()
-let neighbours = network.getNeighbours(allPlayers[0]) // returns array of neigbours of first player
-```
-
 By default `monsterr` is configured with `Network.pairs(16)`. You can use any other configuration you like.
 
 ```js
 import { Network } from 'monsterr'
 
 // Using matrix
-let myNetwork = Network.fromAdjecencyMatrix([
+let myNetwork = Network.fromAdjacencyMatrix([
   [1, 1, 0, 0],
   [1, 1, 0, 1],
   [0, 0, 1, 0],
@@ -25,7 +17,7 @@ let myNetwork = Network.fromAdjecencyMatrix([
 ])
 
 // Using list (equivalent network configuration)
-let myNetwork = Network.fromAdjecencyList([
+let myNetwork = Network.fromAdjacencyList([
   [1],
   [0, 3],
   [],
@@ -45,11 +37,11 @@ const monsterrServer = createServer({
 })
 ```
 
-*Notice that it is perfectly possible to use an asymmetrical adjecency matrix or list which means that **directed graphs are supported just the same as undirected**.*
+*Notice that it is perfectly possible to use an asymmetrical Adjacency matrix or list which means that **directed graphs are supported just the same as undirected**.*
 
 ```js
 // directed one-way circular graph
-let myNetwork = Network.fromAdjecencyList([
+let myNetwork = Network.fromAdjacencyList([
   [1],
   [2],
   [3],
@@ -58,13 +50,19 @@ let myNetwork = Network.fromAdjecencyList([
 ])
 ```
 
+### Accessing players
+You can access current players through `monsterrServer` directly:
+```js
+monsterrServer.getPlayers() // returns list of players (ids)
+```
+
 ## Proposal (THIS IS NOT IMPLEMENTED)
 
 The current implementation only allows for a set number of clients. I propose supporting a variable number of clients. The way I would approach that is using a `grow` function that specifies how a network grows.
 
 ```js
-let myNetwork = Network.fromAdjecencyList(
-  [], // some initial network configuration (adjecency list)
+let myNetwork = Network.fromAdjacencyList(
+  [], // some initial network configuration (Adjacency list)
   (adjList) => {
     // Optional function that takes in the current adjList and returns a new larger one. This defines how the network grows.
     // It is automatically called when needed.
@@ -113,7 +111,7 @@ This might be paired with a `maxPlayers` optional setting/option that allows us 
 
 As an example `pairs` could be implemented similar to this:
 ```js
-let pairsNetwork = Network.fromAdjecencyList(
+let pairsNetwork = Network.fromAdjacencyList(
   // start off with one pair
   [
     [1],

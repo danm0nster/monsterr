@@ -61,4 +61,21 @@ Or you could do both, simply by omitting the `return false` client side.
 
 ## Built-in commands
 
-***TODO***
+
+### Client
+From the regular client you can issue the following commands:
+- `/clear`: Clears the chat.
+- `/id`: Prints clients id to chat.
+- `/name [name]`: Names the client in chat (doesn't change id).
+
+### Admin
+From the admin client you can issue any of the regular client commands **PLUS** the following:
+- `/start`: Will start the game (if not already started).
+- `/next`: Will force game to next stage.
+- `/reset`: Will end current stage and reset game.
+
+In addition you can use the rather plain:
+- `/players`: Writes a list of current players (ids) to admin chat.
+- `/latencies`: Writes a stringified version of latency map to admin chat.
+
+If you want to list players or their latencies more than for debugging now and then you will probably do well to implement an interface displaying these instead.

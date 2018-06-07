@@ -20,7 +20,7 @@ function firstEmptyIndex (array) {
 }
 
 /**
- * Returns an adjecency list representing the same network layout as the matrix.
+ * Returns an adjacency list representing the same network layout as the matrix.
  * @param {adjList} matrix The matrix to convert.
  * @returns {adjList}
  */
@@ -35,7 +35,7 @@ function matrixToList (matrix) {
 }
 
 /**
- * Returns an adjecency matrix representing the same network layout as the list.
+ * Returns an adjacency matrix representing the same network layout as the list.
  * @param {adjList} list The list to convert.
  * @returns {adjList}
  */
@@ -55,7 +55,7 @@ function listToMatrix (list) {
 
 /**
  * Returns a network.
- * @param {adjList} adjList an adjecency list defining a network layout
+ * @param {adjList} adjList an adjacency list defining a network layout
  */
 function createNetwork (adjList) {
   // remove dupes
@@ -121,16 +121,16 @@ module.exports = {
   /**
    * @param {adjList} list
    */
-  fromAdjecencyList (list) {
+  fromAdjacencyList (list) {
     return this.create(list)
   },
 
   /**
    * @param {adjList} matrix
    */
-  fromAdjecencyMatrix (matrix) {
+  fromAdjacencyMatrix (matrix) {
     let adjList = matrixToList(matrix)
-    return this.fromAdjecencyList(adjList)
+    return this.fromAdjacencyList(adjList)
   },
 
   /* standard networks */

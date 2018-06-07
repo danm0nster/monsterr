@@ -11,3 +11,4 @@
 - [css](./css.md)
 - [canvas](./canvas.md)
 - [logging](./logging.md)
+- [bots](./bots.md)

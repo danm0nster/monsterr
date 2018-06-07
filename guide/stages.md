@@ -115,6 +115,22 @@ const stages = [
 ]
 ```
 
+## Example
+Heres a real-world example stage setup utilizing both `repeat` and `withDuration`:
+```js
+/* imports... */
+
+const stages = [
+  introStage,
+  quizStage,
+  Stages.repeat([
+    Stages.withDuration(gameStage, settings.GAME_DURATION),
+    resultStage
+  ], settings.GAME_ROUNDS)
+]
+```
+> Note the use of a nested sequence of stages within `repeat`.
+
 # Html Container
 
 It is possible to add HTML to your stages. This can be useful if you have to present something better structured as HTML or if you want to take some inputs from the user.

@@ -1,6 +1,8 @@
 # Logging
 Logging works exactly the same on server and client side, but the actual logs are of course stored on the server. On both sides logging is done through `monsterr.log`.
 
+> Logging uses [winston](https://github.com/winstonjs/winston) internally.
+
 ## Options
 The default log file can be set through `monsterr.options`.
 ```js

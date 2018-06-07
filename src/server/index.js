@@ -82,25 +82,21 @@ export default function createServer ({
     })
   }
 
-  function start () {
-    stageManager.start()
-  }
-
   // Event handling
   function handleEvent (event) {
     Util.handleEvent(event, [
-      events,
       builtinEvents,
+      events,
       stageManager.getEvents()
     ], monsterr)
   }
 
   function handleCommand (cmd) {
     Util.handleCommand(cmd, [
-      commands,
-      stageManager.getCommands(),
+      !cmd.clientId ? adminCommands : {},
       !cmd.clientId ? builtinAdminCommands : {},
-      !cmd.clientId ? adminCommands : {}
+      commands,
+      stageManager.getCommands()
     ], monsterr)
   }
 
@@ -139,6 +135,7 @@ export default function createServer ({
     event,
     player => handleEvent({
       type: event,
+      payload: player,
       clientId: player
     })
   ]
@@ -158,22 +155,26 @@ export default function createServer ({
 
   /** API */
   const monsterr = {
+    // Basic
     run,
-    start,
     send,
     log,
 
-    getNetwork: () => network,
-    getStageManager: () => stageManager,
-    getCommands: () => commands,
-    getEvents: () => events,
-    getLatencies: () => socketServer.getLatencies(),
+    // getNetwork: () => network,
 
+    // Players
     setName,
     getName,
-
     addPlayer,
-    removePlayer
+    removePlayer,
+    getPlayers: () => network.getPlayers(),
+    getLatencies: () => socketServer.getLatencies(),
+
+    // Stages
+    start: () => stageManager.start(),
+    nextStage: () => stageManager.next(),
+    reset: () => stageManager.reset(),
+    playerFinishedStage: (player, stageNo) => stageManager.playerFinishedStage(player, stageNo)
   }
 
   return monsterr

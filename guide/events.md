@@ -1,27 +1,52 @@
 # Events
-The main way of communicating between the server and the client in *monsterr* is through events. Events have an identifier and some data. The identifier is simply a string, whereas the data can be either a string, or a JSON object for more complex events.
+The main way of communicating between the server and the client in *monsterr* is through events. Events have a **type** and a **payload**. The **type** is simply a string, whereas the **payload** should just be serializable. When *sending* events you use the helper `send(type, payload)` instead of supplying the raw event.
+
 ```js
-// Sample identifiers:
-'eventIdentifier'
-'someEvent'
-'123'
-// Sample data:
-'myData'
-{my: 'data'}
-{some: {more: {complex: 'data', with: 'numbers', too: 123}}}
+// Samples:
+send('eventIdentifier', 'myData')
+/* {
+  type: 'eventIdentifier',
+  payload: 'myData'
+} */
+
+send('someEvent', { my: 'data' })
+/* {
+  type: 'someEvent',
+  payload: { my: 'data' }
+} */
+
+send('123', {
+  some: {
+    more: {
+      complex: 'data',
+      with: 'numbers',
+      too: 123
+    }
+  }
+})
+/* {
+  type: '123',
+  payload: {
+    some: {
+      more: {
+        complex: 'data',
+        with: 'numbers',
+        too: 123
+      }
+    }
+  }
+} */
 ```
 
-There are two things you can do with events. You can send them. And you can respond to them. That goes for the server as well as client.
-
 ## Handling events
-You define your event handlers (or simply events) and pass them to `createServer`/`createClient`.
+You define your event handlers and pass them to `createServer`/`createClient`.
 
 ### Client side
 On the client side each event handler is simply passed the `monsterrClient` instance and the data of the event.
 ```js
 let events = {
   myEvent (monsterrClient, data) {
-    ...
+    /* handle events of type 'myEvent' here */
   }
 }
 
@@ -36,7 +61,7 @@ Server-side events are also passed a *clientId*, but are otherwise handled exact
 ```js
 let events = {
   myEvent (monsterrServer, clientId, data) {
-    ...
+    /* handle events of type 'myEvent' here */
   }
 }
 
@@ -51,7 +76,7 @@ When sending events there are substantial differences depending on whether you a
 ### Client side
 From the client you can only send events to the server. To do that simply use `monsterr.send`:
 ```js
-monsterr.send('event', data)
+monsterr.send('type', payload)
 ```
 
 ### Server side
@@ -60,35 +85,25 @@ On the server you need to be specific about who to send the event to.
 The possible methods follow here:
 
 ```js
-monsterr.send('event', data).toAll()
-monsterr.send('event', data).toClient(clientId)
-monsterr.send('event', data).toClients([clientId1, clientId2, ...])
-monsterr.send('event', data).toNeigboursOf(clientId) // includes client 'clientId'
-monsterr.send('event', data).toNeigboursOfExclusive(clientId)
-monsterr.send('event', data).toAdmin() // Send only to the special admin client
+monsterr.send('type', payload).toAll()
+monsterr.send('type', payload).toClient(clientId)
+monsterr.send('type', payload).toClients([clientId1, clientId2, ...])
+monsterr.send('type', payload).toNeigboursOf(clientId) // includes client 'clientId'
+monsterr.send('type', payload).toNeigboursOfExclusive(clientId)
+monsterr.send('type', payload).toAdmin() // Send only to the special admin client
 ```
 
 ## Builtin Events
-Internally `monsterr` uses events as well. These are prefixed to prevent clashes with your events. Sometimes you might want to provide your own eventhandlers for some internal events.
+Internally `monsterr` uses events as well. These are prefixed to prevent clashes with your events. Sometimes you might want to provide your own event handlers for internal events.
+> Note:
+> It's important to note that you will **not** overwrite internal events. Your handlers will be run in addition to the internal logic.
+> They will be called **after** internal event handlers are called.
+> The order is: Internal > User defined > User defined (stage)
 
 The internal events are exposed through `Events` available on client and server.
 
 ```js
 import { Events } from 'monsterr'
-
-/* Available events are:
-Events.CLIENT_CONNECTED     (server)
-Events.CLIENT_RECONNECTED   (server)
-Events.CLIENT_DISCONNECTED  (server)
-
-Events.START_STAGE          (client and server)
-Events.END_STAGE            (client and server)
-Events.STAGE_FINISHED       (client and server)
-Events.GAME_OVER            (client and server)
-
-Events.LOG                  (server)
-Events.MESSAGE              (server)
-*/
 
 // Example use:
 let events = {
@@ -98,4 +113,22 @@ let events = {
 }
 ```
 
-It's important to note that you will **not** overwrite internal events. Your handlers will be run in addition to the internal logic.
+Heres a short description of each builtin event.
+> (S) means its triggered on server, (C) on client, (SC) on both.
+
+### Client lifecycle
+Receives both `clientId` argument and `clientId` as **payload**.
+- `Events.CLIENT_CONNECTED` (S): A new client connected.
+- `Events.CLIENT_RECONNECTED` (S): A client reconnected before timing out.
+- `Events.CLIENT_DISCONNECTED` (S): A client disconnected, possibly due to timing out.
+
+### Stages lifecycle
+These relate to the game progression.
+- `Events.START_STAGE` (SC): A stage is starting. Receives `stageNo` as payload. The event tells a client to start the stage.
+- `Events.END_STAGE` (SC): A stage is ending. Receives `stageNo` as payload. The event tells a client to end the stage.
+- `Events.GAME_OVER` (SC): All stages have ended. Receives no payload. The event tells the client it's done.
+- `Events.STAGE_FINISHED` (S): A client finished a stage (but other clients might not have yet). This event is only fired if stage is timed on client and when all client have reported 'finished' an `END_STAGE` will be fired. You would most likely do well to avoid this event as you can't rely on it always firing. Most likely what you want is the `END_STAGE`.
+
+### Misc.
+- `Events.LOG` (S): A client called `log()`. The event is simply used to do the logging serverside, but you can add to that behaviour.
+- `Events.MESSAGE` (SC): A chat message. Payload is the message. This event is used to pass messages on to neighbours.

@@ -10,15 +10,15 @@ export const builtinAdminCommands = {
   },
 
   next (monsterr) {
-    monsterr.getStageManager().next()
+    monsterr.nextStage()
   },
 
   reset (monsterr) {
-    monsterr.getStageManager().reset()
+    monsterr.reset()
   },
 
   players (monsterr) {
-    const players = monsterr.getNetwork().getPlayers().join(', ')
+    const players = monsterr.getPlayers().join(', ')
     monsterr
       .send(Events.MESSAGE, players)
       .toAdmin()

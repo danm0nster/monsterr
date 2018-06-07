@@ -14,12 +14,12 @@ let threeNodeGraphAsMatrix = [
 
 describe('network', () => {
   it('new network should be empty', () => {
-    let network = Network.fromAdjecencyList(threeNodeGraph)
+    let network = Network.fromAdjacencyList(threeNodeGraph)
     expect(network.getPlayers().length).toEqual(0)
   })
 
   it('new members should be added in order', () => {
-    let network = Network.fromAdjecencyList(threeNodeGraph)
+    let network = Network.fromAdjacencyList(threeNodeGraph)
     network.addPlayer('John')
     network.addPlayer('Jane')
     network.addPlayer('Will')
@@ -27,7 +27,7 @@ describe('network', () => {
   })
 
   it('should be able to retrieve players index', () => {
-    let network = Network.fromAdjecencyList(threeNodeGraph)
+    let network = Network.fromAdjacencyList(threeNodeGraph)
     network.addPlayer('John')
     network.addPlayer('Jane')
     expect(network.getPlayerIndex('John')).toEqual(0)
@@ -37,17 +37,17 @@ describe('network', () => {
 
   // TODO
   it('removing a member should leave a spot in player list', () => {
-    let network = Network.fromAdjecencyList(threeNodeGraph)
+    let network = Network.fromAdjacencyList(threeNodeGraph)
     network.addPlayer('John')
     network.addPlayer('Jane')
     network.addPlayer('Will')
     network.removePlayer('Jane')
-    expect(network.getPlayers()).toEqual(['John', undefined, 'Will'])
+    expect(network.getPlayers()).toEqual(['John', 'Will'])
   })
 
   // TODO
   it('new members should fill empty spot first', () => {
-    let network = Network.fromAdjecencyList(threeNodeGraph)
+    let network = Network.fromAdjacencyList(threeNodeGraph)
     network.addPlayer('John')
     network.addPlayer('Jane')
     network.addPlayer('Will')
@@ -58,7 +58,7 @@ describe('network', () => {
 
   describe('getNeighbours', () => {
     it('should work on full graph', () => {
-      let network = Network.fromAdjecencyList(threeNodeGraph)
+      let network = Network.fromAdjacencyList(threeNodeGraph)
       network.addPlayer('John')
       network.addPlayer('Jane')
       network.addPlayer('Will')
@@ -66,14 +66,14 @@ describe('network', () => {
     })
 
     it('should work on non-full graph', () => {
-      let network = Network.fromAdjecencyList(threeNodeGraph)
+      let network = Network.fromAdjacencyList(threeNodeGraph)
       network.addPlayer('John')
       network.addPlayer('Jane')
       expect(network.getNeighbours('John')).toEqual(['Jane'])
     })
 
     it('should work on graph with empty nodes', () => {
-      let network = Network.fromAdjecencyMatrix(threeNodeGraphAsMatrix)
+      let network = Network.fromAdjacencyMatrix(threeNodeGraphAsMatrix)
       network.addPlayer('John')
       network.addPlayer('Jane')
       network.addPlayer('Will')
