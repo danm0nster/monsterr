@@ -11,7 +11,7 @@ export const builtinEvents = {
 
   [Events.MESSAGE] (monsterr, clientId, msg) {
     monsterr
-      .send(Events.MESSAGE, { msg, name: monsterr.getName(clientId) })
+      .send(Events.MESSAGE, { msg, name: monsterr.getName(clientId), sender: clientId })
       .toNeighboursOf(clientId)
   },
 

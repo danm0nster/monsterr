@@ -1,10 +1,16 @@
 /* globals $ */
 
-function append (msg, name) {
+function append (msg, name, ownMessage) {
   const $nameDiv = $(`<div class="name-div">${name || 'System'}</div>`)
   const $msgDiv = $(`<div class="msg-div">${msg}</div>`)
 
-  const $liItem = $('<li>')
+  const classes = !name
+    ? 'system-message'
+    : ownMessage
+      ? 'message-right'
+      : ''
+
+  const $liItem = $(`<li class="${classes}">`)
   $liItem.append($nameDiv, [$msgDiv])
 
   $('#messages')
@@ -15,7 +21,7 @@ function append (msg, name) {
 }
 
 function rename (name, newName) {
-  $('.name-div').text((_, text) => text.replace(name, newName))
+  $('.name-div').text((_, text) => text === name ? newName : text)
 }
 
 function clear () {

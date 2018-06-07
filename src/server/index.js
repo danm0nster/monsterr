@@ -174,6 +174,7 @@ export default function createServer ({
     start: () => stageManager.start(),
     nextStage: () => stageManager.next(),
     reset: () => stageManager.reset(),
+    getCurrentStage: () => stageManager.getCurrentStage(),
     playerFinishedStage: (player, stageNo) => stageManager.playerFinishedStage(player, stageNo)
   }
 

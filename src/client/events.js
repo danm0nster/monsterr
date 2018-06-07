@@ -9,8 +9,8 @@ export const builtinEvents = {
     if (typeof payload === 'string') {
       monsterr.getChat().append(payload)
     } else {
-      const { msg, name } = payload
-      monsterr.getChat().append(msg, name)
+      const { msg, name, sender } = payload
+      monsterr.getChat().append(msg, name, sender === monsterr.getId())
     }
   }
 }
