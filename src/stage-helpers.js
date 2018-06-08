@@ -8,7 +8,7 @@ export function repeat (stage = {}, n = 2, names) {
   // _.cloneDeep(stage)?
   return Array(n)
     .fill(stage)
-    .map((stage, idx) => withName(stage, (names && names[idx]) || 'unnamed'))
+    .map((stage, idx) => withName(stage, names && names[idx]))
 }
 
 /**
