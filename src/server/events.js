@@ -39,12 +39,12 @@ export const builtinEvents = {
     monsterr.removePlayer(clientId)
   },
 
-  [Events.START_STAGE] (monsterr, _, stageNo) {
-    monsterr.send(Events.START_STAGE, stageNo).toAll()
+  [Events.START_STAGE] (monsterr, _, stage) {
+    monsterr.send(Events.START_STAGE, stage.number).toAll()
   },
 
-  [Events.END_STAGE] (monsterr, _, stageNo) {
-    monsterr.send(Events.END_STAGE, stageNo).toAll()
+  [Events.END_STAGE] (monsterr, _, stage) {
+    monsterr.send(Events.END_STAGE, stage.number).toAll()
   },
 
   [Events.GAME_OVER] (monsterr) {

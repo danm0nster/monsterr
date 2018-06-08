@@ -18,13 +18,19 @@ function createManager ({
 } = {}) {
   let started = false
   let finishedPlayers = []
-  let currentStage = -1
+  let currentStageNo = -1
   let stopStage
 
   let commands = {}
   let events = {}
 
   stages = flattenDeep(stages)
+  /** Return current stage with number attached (or null) */
+  function getStage (stageNo) {
+    return (stageNo >= 0 && stageNo < stages.length)
+      ? { ...stages[stageNo], number: stageNo }
+      : null
+  }
 
   function checkIfDone () {
     let players = getPlayers().filter(p => p !== undefined).sort()
@@ -36,7 +42,7 @@ function createManager ({
   }
 
   function playerFinishedStage (player, stageNo) {
-    if (stageNo !== currentStage) {
+    if (stageNo !== currentStageNo) {
       return
     }
 
@@ -45,7 +51,7 @@ function createManager ({
   }
 
   function start () {
-    if (currentStage === -1 && !started) {
+    if (currentStageNo === -1 && !started) {
       started = true
       nextStage()
     }
@@ -58,25 +64,25 @@ function createManager ({
     if (stopStage) {
       stopStage()
     }
-    if (currentStage >= 0 && currentStage < stages.length) {
-      onStageEnded(currentStage)
+    if (currentStageNo >= 0 && currentStageNo < stages.length) {
+      onStageEnded(getStage(currentStageNo))
     }
   }
 
   function nextStage () {
     if (!started ||
-      currentStage >= stages.length) {
+      currentStageNo >= stages.length) {
       return
     }
 
     stopCurrentStage()
 
-    currentStage++
-    if (currentStage >= stages.length) {
+    currentStageNo++
+    if (currentStageNo >= stages.length) {
       return onGameOver()
     }
 
-    let stage = stages[currentStage]
+    let stage = stages[currentStageNo]
     events = stage.events || {}
     commands = stage.commands || {}
 
@@ -86,17 +92,17 @@ function createManager ({
       timeout: nextStage
     })
 
-    onStageStarted(currentStage)
+    onStageStarted(getStage(currentStageNo))
   }
 
   function reset () {
     stopCurrentStage()
-    currentStage = -1
+    currentStageNo = -1
     started = false
   }
 
   return {
-    getCurrentStage: () => currentStage,
+    getCurrentStage: () => getStage(currentStageNo),
     getEvents: () => events,
     getCommands: () => commands,
 

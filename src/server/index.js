@@ -73,10 +73,10 @@ export default function createServer ({
       stages,
       getContext: () => monsterr,
       getPlayers: () => network.getPlayers(),
-      onStageStarted: stageNo =>
-        handleEvent({ type: Events.START_STAGE, payload: stageNo }),
-      onStageEnded: stageNo =>
-        handleEvent({ type: Events.END_STAGE, payload: stageNo }),
+      onStageStarted: stage =>
+        handleEvent({ type: Events.START_STAGE, payload: stage }),
+      onStageEnded: stage =>
+        handleEvent({ type: Events.END_STAGE, payload: stage }),
       onGameOver: () =>
         handleEvent({ type: Events.GAME_OVER })
     })
@@ -108,9 +108,9 @@ export default function createServer ({
 
     // possibly resume current stage
     const currentStage = stageManager.getCurrentStage()
-    if (resumeCurrentStage && currentStage !== -1) {
+    if (resumeCurrentStage && currentStage && currentStage.number !== -1) {
       setTimeout(
-        () => monsterr.send(Events.START_STAGE, currentStage).toClient(player),
+        () => monsterr.send(Events.START_STAGE, currentStage.number).toClient(player),
         200
       )
     }
