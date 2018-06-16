@@ -98,6 +98,7 @@ class SocketServer extends EventEmitter {
   setupAdmin () {
     this.adminNsp.on('connection', socket => {
       socket.on('cmd', cmd => this.emit('cmd', cmd))
+      socket.on('event', event => this.emit('event', event))
       socket.on('disconnect', () => socket.removeAllListeners())
     })
   }
